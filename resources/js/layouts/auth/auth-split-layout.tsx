@@ -1,7 +1,7 @@
-import { Link, usePage } from '@inertiajs/react';
-import { home } from '@/routes';
 import type { AuthLayoutProps } from '@/types';
 
+// ========== Auth Split Layout ===========
+// A split-screen layout for authentication pages, showing a branding image on one side (desktop) and forms on the other.
 export default function AuthSplitLayout({
     children,
     title,

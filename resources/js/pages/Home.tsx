@@ -28,6 +28,7 @@ const messages = [
 // Renders the user's avatar with initials, active status indicator dot, and size customization.
 function Avatar({ initials, online = false, size = 'md' }: { initials: string; online?: boolean; size?: 'sm' | 'md' | 'lg' }) {
     const sizeClass = size === 'lg' ? 'w-10 h-10 text-sm' : size === 'sm' ? 'w-8 h-8 text-xs' : 'w-9 h-9 text-xs';
+
     return (
         <div className="relative flex-shrink-0">
             <div className={`${sizeClass} rounded-full bg-accent/20 dark:bg-accent-alt/20 flex items-center justify-center font-semibold text-accent dark:text-accent-alt font-sans`}>
