@@ -1,6 +1,6 @@
 import { Form, Head } from '@inertiajs/react';
 import InputError from '@/components/input-error';
-import PasskeyVerify from '@/components/passkey-verify';
+
 import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
@@ -22,7 +22,7 @@ export default function Login({ status, canResetPassword }: Props) {
         <>
             <Head title="Log in" />
 
-            <PasskeyVerify />
+
 
             <Form
                 {...store.form()}
@@ -33,7 +33,7 @@ export default function Login({ status, canResetPassword }: Props) {
                     <>
                         <div className="grid gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
+                                <Label htmlFor="email" className="font-sans text-foreground/80">Email address</Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -43,17 +43,18 @@ export default function Login({ status, canResetPassword }: Props) {
                                     tabIndex={1}
                                     autoComplete="email"
                                     placeholder="email@example.com"
+                                    className="bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/80 dark:border-white/20 shadow-[0_4px_16px_rgba(0,0,0,0.05)] transition-all hover:bg-white/80 dark:hover:bg-white/20 focus-visible:bg-white/90 dark:focus-visible:bg-white/30"
                                 />
                                 <InputError message={errors.email} />
                             </div>
 
                             <div className="grid gap-2">
                                 <div className="flex items-center">
-                                    <Label htmlFor="password">Password</Label>
+                                    <Label htmlFor="password" className="font-sans text-foreground/80">Password</Label>
                                     {canResetPassword && (
                                         <TextLink
                                             href={request()}
-                                            className="ml-auto text-sm"
+                                            className="ml-auto text-sm text-primary hover:text-accent-alt transition-colors"
                                             tabIndex={5}
                                         >
                                             Forgot your password?
@@ -67,6 +68,7 @@ export default function Login({ status, canResetPassword }: Props) {
                                     tabIndex={2}
                                     autoComplete="current-password"
                                     placeholder="Password"
+                                    className="bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/80 dark:border-white/20 shadow-[0_4px_16px_rgba(0,0,0,0.05)] transition-all hover:bg-white/80 dark:hover:bg-white/20 focus-visible:bg-white/90 dark:focus-visible:bg-white/30"
                                 />
                                 <InputError message={errors.password} />
                             </div>
@@ -77,12 +79,12 @@ export default function Login({ status, canResetPassword }: Props) {
                                     name="remember"
                                     tabIndex={3}
                                 />
-                                <Label htmlFor="remember">Remember me</Label>
+                                <Label htmlFor="remember" className="font-sans text-foreground/80">Remember me</Label>
                             </div>
 
                             <Button
                                 type="submit"
-                                className="mt-4 w-full"
+                                className="mt-4 w-full bg-accent-alt text-accent-foreground font-sans font-semibold tracking-wide hover:opacity-90 transition-opacity"
                                 tabIndex={4}
                                 disabled={processing}
                                 data-test="login-button"
@@ -92,9 +94,9 @@ export default function Login({ status, canResetPassword }: Props) {
                             </Button>
                         </div>
 
-                        <div className="text-center text-sm text-muted-foreground">
+                        <div className="text-center text-sm text-muted-foreground font-sans">
                             Don't have an account?{' '}
-                            <TextLink href={register()} tabIndex={5}>
+                            <TextLink href={register()} className="text-primary hover:text-accent-alt transition-colors font-medium" tabIndex={5}>
                                 Sign up
                             </TextLink>
                         </div>
@@ -114,4 +116,5 @@ export default function Login({ status, canResetPassword }: Props) {
 Login.layout = {
     title: 'Log in to your account',
     description: 'Enter your email and password below to log in',
+    image: '/images/login-image.png',
 };
