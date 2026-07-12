@@ -47,4 +47,15 @@ class User extends Authenticatable implements PasskeyUser
             'two_factor_confirmed_at' => 'datetime',
         ];
     }
+
+    // user has many messages where they are the 'sender_id'
+    public function sentMessage()
+    {
+        return $this->hasMany(Message::class, 'sender_id');
+    }
+
+    public function receiveMessage()
+    {
+        return $this->hasMany(Message::class, 'receiver_id');
+    }
 }
