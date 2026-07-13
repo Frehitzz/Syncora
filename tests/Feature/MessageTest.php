@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -11,9 +12,11 @@ it('can get the sender and receiver of a message',
         // 1. ARRANGE: created 2 fake users in our testing db
         $userA = User::factory()->create();
         $userB = User::factory()->create();
+        $conversation = Conversation::create();
 
         // 2. ACT: created message sent from user A to user B
         $message = Message::create([
+            'conversation_id' => $conversation->id,
             'sender_id' => $userA->id,
             'receiver_id' => $userB->id,
             'body' => 'HELLO THIS IS FROM USER A',

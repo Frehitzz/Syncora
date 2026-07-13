@@ -2,6 +2,9 @@
 
 use App\Models\Conversation;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
 
 test('a conversation can link multiple users together',
     function () {
