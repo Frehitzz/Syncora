@@ -2,15 +2,18 @@ import { Head, Link } from '@inertiajs/react';
 import { Moon, Sun, Search, MoreHorizontal, Info, Phone, Video } from 'lucide-react';
 import { useAppearance } from '@/hooks/use-appearance';
 
-// --- Placeholder Data ---
-const conversations = [
-    { id: 1, name: 'Alice Nguyen', lastMessage: 'See you tomorrow!', time: '2m ago', avatar: 'AN', unread: 2, online: true },
-    { id: 2, name: 'Bob Martinez', lastMessage: 'Can you send me the file?', time: '15m ago', avatar: 'BM', unread: 0, online: false },
-    { id: 3, name: 'Carla Reyes', lastMessage: 'That sounds great 😊', time: '1h ago', avatar: 'CR', unread: 0, online: true },
-    { id: 4, name: 'David Kim', lastMessage: 'On my way!', time: '3h ago', avatar: 'DK', unread: 5, online: false },
-    { id: 5, name: 'Eva Chen', lastMessage: 'haha yes exactly!', time: 'Yesterday', avatar: 'EC', unread: 0, online: true },
-    { id: 6, name: 'Frank Liu', lastMessage: 'Meeting at 3pm?', time: 'Yesterday', avatar: 'FL', unread: 0, online: false },
-];
+// ========== STRICT CONTRACT BLUEPRINT FOR THE DATA THAT LARAVEL WILL SEND =======
+// we telling react what the conversation data will looks like:
+// "we have an id that is a number , a name that is string etc"
+interface Conversation {
+    id: number;
+    name: string;
+    lastMessage: string;
+    time: string;
+    avatar: string;
+    unread: number;
+    online: boolean;
+}
 
 const messages = [
     { id: 1, sender: 'Alice Nguyen', content: 'Hey! Are you free this weekend?', time: '10:32 AM', isOwn: false },
@@ -43,7 +46,7 @@ function Avatar({ initials, online = false, size = 'md' }: { initials: string; o
 
 // ========== Conversation Item ===========
 // Displays a conversation item preview in the sidebar (user details, last message, time, and unread badge).
-function ConversationItem({ convo, active }: { convo: typeof conversations[0]; active: boolean }) {
+function ConversationItem({ convo, active }: { convo: Conversation; active: boolean }) {
     return (
         <button
             className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-150 rounded-xl mx-1
@@ -102,14 +105,14 @@ function MessageBubble({ message }: { message: typeof messages[0] }) {
 
 // ========== Home ===========
 // The main page component representing the home dashboard containing the Facebook-like UI (header, sidebar, chat window).
-export default function Home() {
+export default function Home({ conversations = [] }: { conversations?: Conversation[] }) {
     const { resolvedAppearance, updateAppearance } = useAppearance();
 
     const toggleTheme = () => {
         updateAppearance(resolvedAppearance === 'dark' ? 'light' : 'dark');
     };
 
-    const activeConvo = conversations[0];
+    const activeConvo = conversations[0] || null;
 
     return (
         <>
@@ -203,15 +206,19 @@ export default function Home() {
                         {/* Right Top Bar */}
                         <div className="flex-shrink-0 flex items-center justify-between px-6 py-3 border-b border-border bg-background">
                             {/* Left: Active User Info */}
-                            <div className="flex items-center gap-3">
-                                <Avatar initials={activeConvo.avatar} online={activeConvo.online} size="lg" />
-                                <div>
-                                    <p className="text-sm font-bold font-sans text-foreground">{activeConvo.name}</p>
-                                    <p className="text-xs font-sans text-green-500">
-                                        {activeConvo.online ? 'Active now' : 'Offline'}
-                                    </p>
+                            {activeConvo ? (
+                                <div className="flex items-center gap-3">
+                                    <Avatar initials={activeConvo.avatar} online={activeConvo.online} size="lg" />
+                                    <div>
+                                        <p className="text-sm font-bold font-sans text-foreground">{activeConvo.name}</p>
+                                        <p className="text-xs font-sans text-green-500">
+                                            {activeConvo.online ? 'Active now' : 'Offline'}
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <p className="text-sm text-muted-foreground font-sans">Select a conversation to start chatting</p>
+                            )}
 
                             {/* Right: Action Buttons */}
                             <div className="flex items-center gap-1">

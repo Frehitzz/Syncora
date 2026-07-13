@@ -30,3 +30,17 @@ Example:
         return $this->belongsToMany(User::class);
     }
 ```
+
+## Inline Type Hinting Rule
+Whenever assigning variables that Laravel magic or Pest PHP makes difficult for static analysis tools (like PHPStan or Intelephense) to infer, you must add an inline PHPDoc type hint above the variable.
+
+Common scenarios include:
+- `$user = $request->user();` -> `/** @var \App\Models\User $user */`
+- Pest's `$this` variable -> `/** @var \Tests\TestCase $this */`
+- Model factories -> `/** @var \App\Models\User $user */`
+
+Example:
+```php
+    /** @var \Tests\TestCase $this */
+    $response = $this->actingAs($user)->get(route('dashboard'));
+```
