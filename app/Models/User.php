@@ -3,6 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -48,20 +50,35 @@ class User extends Authenticatable implements PasskeyUser
         ];
     }
 
-    // user has many messages where they are the 'sender_id'
-    public function sentMessage()
+    // ========== sentMessage ===========
+    /**
+     * Get all messages sent by this user
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Message, $this>
+     */
+    public function sentMessage(): HasMany
     {
         return $this->hasMany(Message::class, 'sender_id');
     }
 
-    public function receiveMessage()
+    // ========== receiveMessage ===========
+    /**
+     * Get all messages received by this user
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Message, $this>
+     */
+    public function receiveMessage(): HasMany
     {
         return $this->hasMany(Message::class, 'receiver_id');
     }
 
-    // ===== conversations =====
-    // get all the conversations of this user
-    public function conversations()
+    // ========== conversations ===========
+    /**
+     * Get all the conversations this user is a part of
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<Conversation, $this>
+     */
+    public function conversations(): BelongsToMany
     {
         return $this->belongsToMany(Conversation::class);
     }
