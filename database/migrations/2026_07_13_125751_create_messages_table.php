@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::create('messages', function (Blueprint $table) {
             $table->id();
+            // the conversation this message belongs to
+            $table->foreignId('conversation_id')->constrained()->cascadeOnDelete();
             // the user who sent the message
             $table->foreignId('sender_id')->constrained('users');
             // the user who receive the message

@@ -14,10 +14,10 @@ Each feature has a checkbox so you can track your progress. Simple words are use
 
 ### Feature 1.1 — Messages Table & Model
 
-- [ ] Create the `messages` migration table
-- [ ] Create the `Message` model
-- [ ] Set up relationships (a message belongs to a sender and a receiver)
-- [ ] Write a Pest test to check the relationship works
+- [ x ] Create the `messages` migration table
+- [ x ] Create the `Message` model
+- [ x ] Set up relationships (a message belongs to a sender and a receiver)
+- [ x ] Write a Pest test to check the relationship works
 
 **What is this?**
 Right now the messages in `Home.tsx` are fake data hard-coded at the top of the file. We need a real database table to store who sent what message, to whom, and when.
@@ -35,10 +35,10 @@ Create a Pest test that makes two users, creates a message from User A to User B
 
 ### Feature 1.2 — Conversations Table & Model
 
-- [ ] Create the `conversations` migration table
-- [ ] Create the `Conversation` model
-- [ ] Link conversations to users (many-to-many with a pivot table)
-- [ ] Link messages to a conversation
+- [ x ] Create the `conversations` migration table
+- [ x ] Create the `Conversation` model
+- [ x ] Link conversations to users (many-to-many with a pivot table)
+- [ x ] Link messages to a conversation
 - [ ] Write a Pest test to verify conversation-user relationship
 
 **What is this?**
