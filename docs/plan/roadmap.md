@@ -39,7 +39,7 @@ Create a Pest test that makes two users, creates a message from User A to User B
 - [ x ] Create the `Conversation` model
 - [ x ] Link conversations to users (many-to-many with a pivot table)
 - [ x ] Link messages to a conversation
-- [ ] Write a Pest test to verify conversation-user relationship
+- [ x ] Write a Pest test to verify conversation-user relationship
 
 **What is this?**
 The left sidebar in the UI shows a list of people you are chatting with. Each of those is a "conversation." A conversation connects two (or more) users together and holds all their messages.

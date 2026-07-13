@@ -58,4 +58,11 @@ class User extends Authenticatable implements PasskeyUser
     {
         return $this->hasMany(Message::class, 'receiver_id');
     }
+
+    // ===== conversations =====
+    // get all the conversations of this user
+    public function conversations()
+    {
+        return $this->belongsToMany(Conversation::class);
+    }
 }
