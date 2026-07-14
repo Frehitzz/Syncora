@@ -63,11 +63,11 @@ Create two users and a conversation linking them. Assert that the conversation h
 
 ### Feature 2.1 — Load Real Conversations in the Sidebar
 
-- [ ] Create a `ConversationController`
-- [ ] Query conversations for the logged-in user
-- [ ] Pass data from the controller to the React page via Inertia
-- [ ] Replace the hard-coded `conversations` array in `Home.tsx` with real props
-- [ ] Write a Pest test for the controller
+- [ x ] Create a `ConversationController`
+- [ x ] Query conversations for the logged-in user
+- [ x ] Pass data from the controller to the React page via Inertia
+- [ x ] Replace the hard-coded `conversations` array in `Home.tsx` with real props
+- [ x ] Write a Pest test for the controller
 
 **What is this?**
 Right now the left column shows fake names like "Alice Nguyen" and "Bob Martinez." We need to replace those with real conversations from the database.
@@ -85,10 +85,10 @@ Create a Pest test that logs in a user, calls the route, and asserts that the In
 
 ### Feature 2.2 — Load Real Messages in the Chat Window
 
-- [ ] Create a `MessageController`
-- [ ] Fetch messages for the selected conversation
-- [ ] Display real messages in the right column of `Home.tsx`
-- [ ] Write a Pest test for loading messages
+- [ x ] Create a `MessageController`
+- [ x ] Fetch messages for the selected conversation
+- [ x ] Display real messages in the right column of `Home.tsx`
+- [ x ] Write a Pest test for loading messages
 
 **What is this?**
 When you click on a conversation in the left sidebar, the right side should show all the messages between you and that person. Right now it shows fake messages.

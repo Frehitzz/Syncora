@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import { Moon, Sun, Search, MoreHorizontal, Info, Phone, Video } from 'lucide-react';
 import { useAppearance } from '@/hooks/use-appearance';
@@ -15,15 +16,13 @@ interface Conversation {
     online: boolean;
 }
 
-const messages = [
-    { id: 1, sender: 'Alice Nguyen', content: 'Hey! Are you free this weekend?', time: '10:32 AM', isOwn: false },
-    { id: 2, sender: 'You', content: "Yeah, I think so! What's up?", time: '10:34 AM', isOwn: true },
-    { id: 3, sender: 'Alice Nguyen', content: 'We were thinking of going hiking. Want to join?', time: '10:35 AM', isOwn: false },
-    { id: 4, sender: 'You', content: "That sounds awesome! Where are you planning to go?", time: '10:37 AM', isOwn: true },
-    { id: 5, sender: 'Alice Nguyen', content: 'Probably Mt. Pulag. It\'s been on my list for a while now!', time: '10:38 AM', isOwn: false },
-    { id: 6, sender: 'You', content: "I'm in! Let's sort out the details. 🏔️", time: '10:40 AM', isOwn: true },
-    { id: 7, sender: 'Alice Nguyen', content: 'See you tomorrow!', time: '10:41 AM', isOwn: false },
-];
+interface Message {
+    id: number,
+    sender: string,
+    content: string,
+    time: string,
+    isOwn: boolean;
+}
 
 // --- Sub-Components ---
 
@@ -78,7 +77,7 @@ function ConversationItem({ convo, active }: { convo: Conversation; active: bool
 
 // ========== Message Bubble ===========
 // Displays a single chat message bubble, aligned on the right if it's sent by you, or left if sent by others.
-function MessageBubble({ message }: { message: typeof messages[0] }) {
+function MessageBubble({ message }: { message: Message }) {
     return (
         <div className={`flex items-end gap-2 ${message.isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
             {!message.isOwn && (
@@ -112,7 +111,45 @@ export default function Home({ conversations = [] }: { conversations?: Conversat
         updateAppearance(resolvedAppearance === 'dark' ? 'light' : 'dark');
     };
 
-    const activeConvo = conversations[0] || null;
+    //useState<Conversation | null>(conversations[0] || null) -  the default will be the first conversation if theres no vonversation fallback to null
+    // activeConvo creates a memory slot that make react to remember what convo is selected
+    // setActiveConvo is the function you call tho change it
+    const [activeConvo, setActiveConvo] = useState<Conversation | null>(conversations[0] || null);
+
+    // useState<Message[]>([]) - start as an empty array bc we havent loadded any messages yet
+    const [chatMessages, setChatMessages] = useState<Message[]>([]);
+
+    // tracks whether messages are currently being loaded from the sesrver
+    const [loadingMessages, setLoadingMessages] = useState(false);
+
+    // ========  SELECT CONVERSATION ==========
+    // when the conversation is clicked, set it as an active and fetch its message from backend
+    const selectConversation = async (convo: Conversation) => {
+        setActiveConvo(convo); // highlights the conversation you clicked on the leftsidebar
+        setLoadingMessages(true); // turns on the loading indicator
+        // deletes the messages from the previous convo you were looking, so you dont see them while the new ones are loading
+        setChatMessages([]);
+
+        try {
+            // fetch - reach out to laravel backend, it called ajax requestsm it req to our new route 
+            const response = await fetch(`/conversations/${convo.id}/messages`);
+            // take the raw json and transform it into js array/object that react can understand
+            const data = await response.json();
+            // takes that fresh translated data and saves it into react memory
+            setChatMessages(data);
+        } catch (error) {
+            console.error('Failed to fetch messages:', error);
+        } finally {
+            setLoadingMessages(false);
+        }
+    };
+
+    // auto display messages for the first conversation when the page loads
+    useEffect(() => {
+        if (conversations.length > 0) {
+            selectConversation(conversations[0]);
+        }
+    }, []); // [] - to run this code exactly one time after the message appears
 
     return (
         <>
@@ -188,14 +225,19 @@ export default function Home({ conversations = [] }: { conversations?: Conversat
                             </div>
                         </div>
 
-                        {/* Conversation List */}
+                        {/* Conversation List 
+                            - it display each convo on the left sidebar by the map().
+                            - if user click each convo it will display the messaes of the convo by running selectConversation
+                        
+                        */}
                         <div className="flex-1 overflow-y-auto py-2 space-y-0.5 scrollbar-thin">
                             {conversations.map((convo) => (
-                                <ConversationItem
-                                    key={convo.id}
-                                    convo={convo}
-                                    active={convo.id === activeConvo.id}
-                                />
+                                <div key={convo.id} onClick={() => selectConversation(convo)}>
+                                    <ConversationItem
+                                        convo={convo}
+                                        active={activeConvo !== null && convo.id === activeConvo.id}
+                                    />
+                                </div>
                             ))}
                         </div>
                     </aside>
@@ -245,36 +287,53 @@ export default function Home({ conversations = [] }: { conversations?: Conversat
 
                         {/* Messages Area */}
                         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
-                            {/* Date Separator */}
-                            <div className="flex items-center gap-3 my-2">
-                                <div className="flex-1 h-px bg-border" />
-                                <span className="text-xs text-muted-foreground font-sans flex-shrink-0">Today</span>
-                                <div className="flex-1 h-px bg-border" />
-                            </div>
+                            {activeConvo ? (
+                                <>
+                                    {/* Date Separator */}
+                                    <div className="flex items-center gap-3 my-2">
+                                        <div className="flex-1 h-px bg-border" />
+                                        <span className="text-xs text-muted-foreground font-sans flex-shrink-0">Today</span>
+                                        <div className="flex-1 h-px bg-border" />
+                                    </div>
 
-                            {messages.map((message) => (
-                                <MessageBubble key={message.id} message={message} />
-                            ))}
+                                    {loadingMessages ? (
+                                        <p className="text-center text-sm text-muted-foreground font-sans py-8">Loading messages...</p>
+                                    ) : chatMessages.length > 0 ? (
+                                        chatMessages.map((message) => (
+                                            <MessageBubble key={message.id} message={message} />
+                                        ))
+                                    ) : (
+                                        <p className="text-center text-sm text-muted-foreground font-sans py-8">No messages yet. Say hello! 👋</p>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="flex-1 flex items-center justify-center">
+                                    <p className="text-sm text-muted-foreground font-sans">Select a conversation to view messages</p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Message Input */}
-                        <div className="flex-shrink-0 px-6 py-4 border-t border-border bg-background">
-                            <div className="flex items-center gap-3 bg-muted/50 dark:bg-muted/20 rounded-full px-5 py-3 border border-border transition-all focus-within:border-accent dark:focus-within:border-accent-alt focus-within:ring-1 focus-within:ring-accent/20">
-                                <input
-                                    type="text"
-                                    placeholder="Type a message..."
-                                    className="flex-1 bg-transparent text-sm font-sans text-foreground placeholder:text-muted-foreground outline-none"
-                                />
-                                <button
-                                    className="flex-shrink-0 w-8 h-8 rounded-full bg-accent dark:bg-accent-alt flex items-center justify-center text-white hover:opacity-90 transition-opacity"
-                                    aria-label="Send message"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                                        <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
-                                    </svg>
-                                </button>
+                        {activeConvo && (
+                            <div className="flex-shrink-0 px-6 py-4 border-t border-border bg-background">
+                                <div className="flex items-center gap-3 bg-muted/50 dark:bg-muted/20 rounded-full px-5 py-3 border border-border transition-all focus-within:border-accent dark:focus-within:border-accent-alt focus-within:ring-1 focus-within:ring-accent/20">
+                                    <input
+                                        type="text"
+                                        placeholder="Type a message..."
+                                        className="flex-1 bg-transparent text-sm font-sans text-foreground placeholder:text-muted-foreground outline-none"
+                                    />
+                                    <button
+                                        className="flex-shrink-0 w-8 h-8 rounded-full bg-accent dark:bg-accent-alt flex items-center justify-center text-white hover:opacity-90 transition-opacity"
+                                        aria-label="Send message"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                                            <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
+                        )}
+
                     </main>
 
                 </div>
