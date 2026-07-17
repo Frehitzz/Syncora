@@ -125,6 +125,20 @@ export default function Home({ conversations = [] }: { conversations?: Conversat
     // tracks what the user is typing
     const [newMessage, setNewMessage] = useState('');
 
+    // track if search bar is visible
+    const [searchOpen, setSearchOpen] = useState(false);
+
+    // tracks the search query text
+    const [searchQuery, setSearchQuery] = useState('');
+
+    // ======== FILTERED CONVERSATIONS ==========
+    // filters the conversation list based on the search query (case-insensitive)
+    // .filter() - a method that create an array and loops every conversation and check "does this one match the search"
+    // .toLowerCase - transform all charaacter to lowercase
+    // .includes() - checks if one string contains another ex. searched "ali" display "alice"
+    const filteredConversations = conversations.filter((convo) =>
+        convo.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
     // ========  SELECT CONVERSATION ==========
     // when the conversation is clicked, set it as an active and fetch its message from backend
     const selectConversation = async (convo: Conversation) => {
@@ -153,8 +167,8 @@ export default function Home({ conversations = [] }: { conversations?: Conversat
     const sendMessage = async () => {
         // don't send if there's no active conversation or the message is empty
         if (!activeConvo || newMessage.trim() === '') {
-return;
-}
+            return;
+        }
 
         try {
             const response = await fetch(`/conversations/${activeConvo.id}/messages`, {
@@ -261,8 +275,18 @@ return;
                             <div className="flex items-center gap-2">
                                 {/* Search Button */}
                                 <button
+                                    onClick={() => {
+                                        setSearchOpen(!searchOpen);
+                                        if (searchOpen) {
+                                            setSearchQuery('');
+                                        }
+                                    }}
                                     aria-label="Search conversations"
-                                    className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted dark:hover:bg-muted/40 transition-all"
+                                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all
+        ${searchOpen
+                                            ? 'text-accent dark:text-accent-alt bg-accent/10 dark:bg-accent-alt/10'
+                                            : 'text-muted-foreground hover:text-foreground hover:bg-muted dark:hover:bg-muted/40'
+                                        }`}
                                 >
                                     <Search className="w-4 h-4" />
                                 </button>
@@ -275,21 +299,39 @@ return;
                                 </button>
                             </div>
                         </div>
+                        {/* Search Input Bar — slides in when search is active */}
+                        {searchOpen && (
+                            <div className="flex-shrink-0 px-4 py-2 border-b border-border">
+                                <input
+                                    type="text"
+                                    placeholder="Search by name..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    autoFocus
+                                    className="w-full px-3 py-2 text-sm font-sans rounded-lg bg-muted/50 dark:bg-muted/20 border border-border text-foreground placeholder:text-muted-foreground outline-none focus:border-accent dark:focus:border-accent-alt focus:ring-1 focus:ring-accent/20 transition-all"
+                                />
+                            </div>
+                        )}
 
                         {/* Conversation List 
                             - it display each convo on the left sidebar by the map().
                             - if user click each convo it will display the messaes of the convo by running selectConversation
-                        
                         */}
                         <div className="flex-1 overflow-y-auto py-2 space-y-0.5 scrollbar-thin">
-                            {conversations.map((convo) => (
-                                <div key={convo.id} onClick={() => selectConversation(convo)}>
-                                    <ConversationItem
-                                        convo={convo}
-                                        active={activeConvo !== null && convo.id === activeConvo.id}
-                                    />
-                                </div>
-                            ))}
+                            {filteredConversations.length > 0 ? (
+                                filteredConversations.map((convo) => (
+                                    <div key={convo.id} onClick={() => selectConversation(convo)}>
+                                        <ConversationItem
+                                            convo={convo}
+                                            active={activeConvo !== null && convo.id === activeConvo.id}
+                                        />
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-center text-sm text-muted-foreground font-sans py-8">
+                                    {searchOpen ? 'No conversations found.' : 'No conversations yet.'}
+                                </p>
+                            )}
                         </div>
                     </aside>
 

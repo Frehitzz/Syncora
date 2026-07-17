@@ -128,9 +128,9 @@ Log in as a user, send a POST request with a message body, and assert the messag
 
 ### Feature 2.4 — Search Conversations
 
-- [ ] Make the search button on the left sidebar functional
-- [ ] Filter conversations by name as the user types
-- [ ] Write a Pest test for the search endpoint
+- [ x ] Make the search button on the left sidebar functional
+- [ x ] Filter conversations by name as the user types
+- [ x ] Write a Pest test for the search endpoint
 
 **What is this?**
 There is a search icon (🔍) at the top of the left sidebar. When clicked, it should show a search box where you can type a name and filter the conversation list.
