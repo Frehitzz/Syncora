@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Conversation;
+use App\Models\Message;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -42,5 +43,46 @@ class MessageController extends Controller
         });
 
         return response()->json($messages);
+    }
+
+    // =========== store =========
+    // validate, save, and return a new message for the other convo
+    public function store(Request $request, Conversation $conversation): JsonResponse
+    {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        // make sure logged in user belong to this convo
+        if (!$conversation->users()->where('user_id', $user->id)->exists()){
+            abort(403, 'You do not belong to this conversation');
+        }
+
+        // validate: make sure message is not empty
+        $validated = $request->validate([
+            'body' => 'required|string|max:5000',
+        ]);
+
+        // figure out who the other person in this conversation is
+        $receiverId = $conversation->users()
+            ->where('user_id', '!=', $user->id)
+            ->value('user_id');
+
+        // save message to db
+        $message = Message::create([
+            'conversation_id' => $conversation->id,
+            'sender_id' => $user->id,
+            'receiver_id' => $receiverId,
+            'body' => $validated['body'],
+            'is_read' => false,
+        ]);
+
+        // return the translated format that frontend expects
+        return response()->json([
+            'id' => $message->id,
+            'sender' => $user->name,
+            'content' => $message->body,
+            'time' => $message->created_at->format('g:i A'),
+            'isOwn' => true,
+        ], 201);
     }
 }

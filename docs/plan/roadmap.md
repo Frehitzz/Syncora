@@ -105,12 +105,12 @@ Create two users, a conversation, and some messages. Log in as User A, request t
 
 ### Feature 2.3 — Send a Message
 
-- [ ] Create a `store` method in `MessageController`
-- [ ] Validate the message input on the backend
-- [ ] Save the message to the database
-- [ ] Return the new message to the frontend
-- [ ] Make the send button in `Home.tsx` actually work
-- [ ] Write a Pest test for sending a message
+- [ x ] Create a `store` method in `MessageController`
+- [ x ] Validate the message input on the backend
+- [ x ] Save the message to the database
+- [ x ] Return the new message to the frontend
+- [ x ] Make the send button in `Home.tsx` actually work
+- [ x ] Write a Pest test for sending a message
 
 **What is this?**
 The input box at the bottom of the chat window has a send button. When you type a message and press send, it should save to the database and appear in the chat.
@@ -142,6 +142,101 @@ There is a search icon (🔍) at the top of the left sidebar. When clicked, it s
 
 **Test to write:**
 Create multiple conversations, search for a specific name, and assert only the matching conversations are returned.
+
+---
+
+### Feature 2.5 — Start a New Conversation
+
+- [ ] Create a `store` method in `ConversationController`
+- [ ] Add a backend endpoint to search for users by email or name
+- [ ] Add a "New Chat" button to the left sidebar
+- [ ] Build a modal/popup where the user can search for another user by email
+- [ ] When the user selects someone, create a new conversation (or open the existing one)
+- [ ] Redirect to the new conversation and load it in the chat window
+- [ ] Prevent duplicate conversations between the same two users
+- [ ] Write a Pest test for creating a conversation
+- [ ] Write a Pest test for the user search endpoint
+- [ ] Write a Pest test to verify duplicate conversations are not created
+
+**What is this?**
+Right now, conversations only exist if they were put into the database manually (via seeders). There is no way for a real user to start chatting with someone new. This feature adds a "New Chat" button to the sidebar. When you click it, a popup appears where you can search for a user by their email address. If you find them, a new conversation is created and you can start messaging right away.
+
+**How to build it:**
+
+*Backend:*
+1. Create a `UserSearchController` (or add a method to an existing controller) that accepts a search query and returns matching users from the database. Only search by `email` or `name`, and exclude the currently logged-in user from the results.
+2. In `ConversationController`, add a `store()` method that receives the other user's ID. Before creating a new conversation, check if a conversation between these two users already exists. If it does, return the existing one. If not, create a new conversation and attach both users to it.
+3. Add two new routes:
+   - `GET /users/search?query=...` — for searching users
+   - `POST /conversations` — for creating a new conversation
+
+*Frontend:*
+4. Add a "New Chat" button (a `+` icon or a compose icon) next to the search icon on the left sidebar top bar.
+5. When clicked, show a modal/popup with a search input.
+6. As the user types an email, send a request to the search endpoint and display matching users.
+7. When the user clicks on a result, send a POST request to create the conversation.
+8. After the conversation is created, add it to the sidebar list, select it, and open the chat window.
+
+**Tests to write:**
+1. Search for a user by email and assert the correct user is returned.
+2. Search should NOT return the logged-in user themselves.
+3. Create a new conversation between two users and assert it exists in the database with both users attached.
+4. Try to create a conversation with a user that already has one — assert no duplicate is created and the existing conversation is returned.
+
+---
+
+### Feature 2.6 — Chat Request & Accept Notifications
+
+- [ ] Create a `chat_requests` table (sender_id, receiver_id, status: pending/accepted/rejected)
+- [ ] Create a `ChatRequest` model with relationships
+- [ ] Create a `ChatRequestController` with `store`, `accept`, and `reject` methods
+- [ ] Add routes for sending, accepting, and rejecting chat requests
+- [ ] Add a notification bell icon in the header (next to the dark/light mode toggle)
+- [ ] Show a badge count on the bell icon for pending requests
+- [ ] When the bell is clicked, show a dropdown listing pending chat requests
+- [ ] Each request shows the sender's name/email and Accept/Reject buttons
+- [ ] When accepted, create the conversation and add both users to it
+- [ ] When rejected, mark the request as rejected
+- [ ] Prevent duplicate chat requests (can't send a request to someone you already requested)
+- [ ] Update Feature 2.5 flow: instead of creating a conversation immediately, send a chat request first
+- [ ] Write a Pest test for sending a chat request
+- [ ] Write a Pest test for accepting a chat request (conversation is created)
+- [ ] Write a Pest test for rejecting a chat request
+- [ ] Write a Pest test for preventing duplicate requests
+
+**What is this?**
+In Feature 2.5, when you search for a user and click on them, a conversation is created immediately. But in real life, you wouldn't want random strangers to just start chatting with you. This feature adds a **chat request system** — like a friend request. When User A wants to chat with User B, a request is sent. User B sees a notification bell icon in the header with a badge (like "2" for 2 pending requests). When they click the bell, they see who wants to chat and can Accept or Reject. If they accept, the conversation is created and both users can start chatting.
+
+**How to build it:**
+
+*Database:*
+1. Create a `chat_requests` migration with columns: `id`, `sender_id` (foreign key to users), `receiver_id` (foreign key to users), `status` (enum: pending, accepted, rejected), and `timestamps`.
+2. Create a `ChatRequest` model with `sender()` and `receiver()` BelongsTo relationships.
+
+*Backend:*
+3. Create a `ChatRequestController` with three methods:
+   - `store()` — Receives the receiver's user ID, validates the request (no duplicate, can't send to yourself), and creates a pending chat request.
+   - `accept()` — Changes the request status to "accepted" and creates a new conversation with both users attached.
+   - `reject()` — Changes the request status to "rejected".
+4. Add a route or method to fetch all pending chat requests for the logged-in user (for the notification dropdown).
+5. Add routes:
+   - `POST /chat-requests` — send a request
+   - `PATCH /chat-requests/{chatRequest}/accept` — accept a request
+   - `PATCH /chat-requests/{chatRequest}/reject` — reject a request
+   - `GET /chat-requests/pending` — fetch pending requests for the bell icon
+
+*Frontend:*
+6. Add a notification bell icon (🔔) in the header next to the dark/light mode toggle.
+7. Show a red badge with a count of pending requests on the bell icon.
+8. When clicked, show a dropdown panel listing each pending request with the sender's name and Accept/Reject buttons.
+9. Update Feature 2.5: instead of creating a conversation on user search click, send a chat request instead.
+
+**Tests to write:**
+1. Send a chat request and assert it exists in the `chat_requests` table with status "pending".
+2. Accept a chat request and assert a conversation is created with both users attached and the request status is "accepted".
+3. Reject a chat request and assert the request status is "rejected" and no conversation is created.
+4. Try to send a duplicate request and assert it is rejected.
+5. Try to send a request to yourself and assert it is rejected.
 
 ---
 

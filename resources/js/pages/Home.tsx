@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
 import { Head, Link } from '@inertiajs/react';
-import { Moon, Sun, Search, MoreHorizontal, Info, Phone, Video } from 'lucide-react';
+import { Moon, Sun, Search, MoreHorizontal, Info, Phone, Video, Bell } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { useAppearance } from '@/hooks/use-appearance';
 
 // ========== STRICT CONTRACT BLUEPRINT FOR THE DATA THAT LARAVEL WILL SEND =======
@@ -122,6 +122,9 @@ export default function Home({ conversations = [] }: { conversations?: Conversat
     // tracks whether messages are currently being loaded from the sesrver
     const [loadingMessages, setLoadingMessages] = useState(false);
 
+    // tracks what the user is typing
+    const [newMessage, setNewMessage] = useState('');
+
     // ========  SELECT CONVERSATION ==========
     // when the conversation is clicked, set it as an active and fetch its message from backend
     const selectConversation = async (convo: Conversation) => {
@@ -144,11 +147,49 @@ export default function Home({ conversations = [] }: { conversations?: Conversat
         }
     };
 
+    // ========= SEND MESSAGE ==========
+    // sends the typed message to the backend, saves itm and
+    // shows it in the chat window
+    const sendMessage = async () => {
+        // don't send if there's no active conversation or the message is empty
+        if (!activeConvo || newMessage.trim() === '') {
+return;
+}
+
+        try {
+            const response = await fetch(`/conversations/${activeConvo.id}/messages`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                },
+                body: JSON.stringify({ body: newMessage }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to send message');
+            }
+
+            // the backend returns the saved message in the format we need
+            const savedMessage = await response.json();
+
+            // add the new message to the end of the chat list
+            setChatMessages((prev) => [...prev, savedMessage]);
+
+            // clear the input box so the user can type a new message
+            setNewMessage('');
+        } catch (error) {
+            console.error('Failed to send message:', error);
+        }
+    };
+
     // auto display messages for the first conversation when the page loads
     useEffect(() => {
         if (conversations.length > 0) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             selectConversation(conversations[0]);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // [] - to run this code exactly one time after the message appears
 
     return (
@@ -182,8 +223,18 @@ export default function Home({ conversations = [] }: { conversations?: Conversat
                         </Link>
                     </nav>
 
-                    {/* Right: Theme Toggle */}
-                    <div className="flex-1 flex justify-end">
+                    {/* Right: Notifications & Theme Toggle */}
+                    <div className="flex-1 flex justify-end items-center gap-1">
+                        {/* Notification Bell */}
+                        <button
+                            aria-label="Notifications"
+                            className="relative w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted dark:hover:bg-muted/40 transition-all duration-150"
+                        >
+                            <Bell className="w-5 h-5" />
+                            {/* Badge — shows count of pending chat requests (placeholder for now) */}
+                            {/*<span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold font-sans leading-none">2</span>*/}
+                        </button>
+                        {/* Theme Toggle */}
                         <button
                             onClick={toggleTheme}
                             aria-label="Toggle dark mode"
@@ -320,10 +371,20 @@ export default function Home({ conversations = [] }: { conversations?: Conversat
                                     <input
                                         type="text"
                                         placeholder="Type a message..."
+                                        value={newMessage}
+                                        onChange={(e) => setNewMessage(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && !e.shiftKey) {
+                                                e.preventDefault();
+                                                sendMessage();
+                                            }
+                                        }}
                                         className="flex-1 bg-transparent text-sm font-sans text-foreground placeholder:text-muted-foreground outline-none"
                                     />
                                     <button
-                                        className="flex-shrink-0 w-8 h-8 rounded-full bg-accent dark:bg-accent-alt flex items-center justify-center text-white hover:opacity-90 transition-opacity"
+                                        onClick={sendMessage}
+                                        disabled={newMessage.trim() === ''}
+                                        className="flex-shrink-0 w-8 h-8 rounded-full bg-accent dark:bg-accent-alt flex items-center justify-center text-white hover:opacity-90 transition-opacity disabled:opacity-40"
                                         aria-label="Send message"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">

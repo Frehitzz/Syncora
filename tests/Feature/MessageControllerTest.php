@@ -64,3 +64,89 @@ test('user cannot view mesages for a conversation they do not belong to', functi
 
     $response->assertForbidden();
 });
+
+test('logged in user can send a message to their conversation', function () {
+    // 1. ARRANGE: create 2 users and a conversation
+    /** @var \App\Models\User $user */
+    $user = User::factory()->create();
+
+    /** @var \App\Models\User $otherUser */
+    $otherUser = User::factory()->create();
+
+    $conversation = Conversation::create();
+    $conversation->users()->attach([$user->id, $otherUser->id]);
+
+    // 2. ACT: send a POST request with a message body
+    /** @var \Tests\TestCase $this */
+    $response = $this->actingAs($user)->postJson(
+        route('conversations.messages.store', $conversation),
+        ['body' => 'Hello from the test!']
+    );
+
+    // 3. ASSERT: the response is 201 Created and the message is in the database
+    $response->assertCreated();
+    $response->assertJsonFragment([
+        'content' => 'Hello from the test!',
+        'isOwn' => true,
+    ]);
+
+    $this->assertDatabaseHas('messages', [
+        'conversation_id' => $conversation->id,
+        'sender_id'       => $user->id,
+        'receiver_id'     => $otherUser->id,
+        'body'            => 'Hello from the test!',
+    ]);
+});
+
+test('user cannot send a message to a conversation they do not belong to', function () {
+    // 1. ARRANGE: create a conversation that the user is NOT part of
+    /** @var \App\Models\User $user */
+    $user = User::factory()->create();
+
+    /** @var \App\Models\User $stranger1 */
+    $stranger1 = User::factory()->create();
+
+    /** @var \App\Models\User $stranger2 */
+    $stranger2 = User::factory()->create();
+
+    $conversation = Conversation::create();
+    $conversation->users()->attach([$stranger1->id, $stranger2->id]);
+
+    // 2. ACT: try to send a message as the outsider
+    /** @var \Tests\TestCase $this */
+    $response = $this->actingAs($user)->postJson(
+        route('conversations.messages.store', $conversation),
+        ['body' => 'I should not be able to send this!']
+    );
+
+    // 3. ASSERT: we get a 403 Forbidden response
+    $response->assertForbidden();
+
+    // also verify the message was NOT saved to the database
+    $this->assertDatabaseMissing('messages', [
+        'body' => 'I should not be able to send this!',
+    ]);
+});
+
+test('user cannot send an empty message', function () {
+    // 1. ARRANGE
+    /** @var \App\Models\User $user */
+    $user = User::factory()->create();
+
+    /** @var \App\Models\User $otherUser */
+    $otherUser = User::factory()->create();
+
+    $conversation = Conversation::create();
+    $conversation->users()->attach([$user->id, $otherUser->id]);
+
+    // 2. ACT: send a POST request with an empty body
+    /** @var \Tests\TestCase $this */
+    $response = $this->actingAs($user)->postJson(
+        route('conversations.messages.store', $conversation),
+        ['body' => '']
+    );
+
+    // 3. ASSERT: we get a 422 validation error
+    $response->assertUnprocessable();
+    $response->assertJsonValidationErrors('body');
+});
