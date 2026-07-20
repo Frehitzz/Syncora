@@ -107,6 +107,18 @@ interface UserSearchResult {
     email: string;
 }
 
+interface ChatRequestData {
+    id: number;
+    sender_id: number;
+    receiver_id: number;
+    status: string;
+    sender: {
+        id: number;
+        name: string;
+        email: string;
+    };
+}
+
 // ========== Home ===========
 // The main page component representing the home dashboard containing the Facebook-like UI (header, sidebar, chat window).
 export default function Home({ conversations = [] }: { conversations?: Conversation[] }) {
@@ -142,21 +154,25 @@ export default function Home({ conversations = [] }: { conversations?: Conversat
     const [userSearchResults, setUserSearchResults] = useState<UserSearchResult[]>([]);
     const [isSearchingUsers, setIsSearchingUsers] = useState(false);
 
+    // ======== CHAT REQUEST NOTIFICATION STATE ==========
+    const [chatRequests, setChatRequests] = useState<ChatRequestData[]>([]);
+    const [isNotifOpen, setIsNotifOpen] = useState(false);
+
     // every time you type it automatically display the users realtime
     useEffect(() => {
-        // if input is clear, clear the results
         if (userSearchQuery.trim() === '') {
-            setUserSearchResults([]);
             return;
         }
 
         // define search function
         const searchUsers = async () => {
             setIsSearchingUsers(true);
+
             // turn on loading spinner
             try {
                 // go to the backend route 
                 const response = await fetch(`/users/search?query=${encodeURIComponent(userSearchQuery)}`);
+
                 // convert the backend response to json
                 if (response.ok) {
                     const data = await response.json();
@@ -172,39 +188,92 @@ export default function Home({ conversations = [] }: { conversations?: Conversat
 
         // to let user finish the typing before display results
         const delayTimer = setTimeout(searchUsers, 300);
+
         return () => clearTimeout(delayTimer);
     }, [userSearchQuery]);
 
-    // send request to create a new conversation with the selected user
-    // get the id of what the user click on the search results it gets that user id
+    // load pending chat requests when the page first loads
+    useEffect(() => {
+        const fetchPendingRequests = async () => {
+            try {
+                const response = await fetch('/chat-requests/pending');
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setChatRequests(data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch chat requests", error);
+            }
+        };
+
+        fetchPendingRequests();
+    }, []);
+
+    // send a chat request to the selected user (instead of creating a conversation immediately)
     const startNewChat = async (userId: number) => {
         try {
-            // BUILT INT JAVASCRIPT FETCH FEATURES
-            const response = await fetch('/conversations', {
+            const response = await fetch('/chat-requests', {
                 method: 'POST',
-                // LIKE AN ENVELOPE OF A LETTER
                 headers: {
-                    // tells laravel the data inside is formatted as json
                     'Content-Type': 'application/json',
-                    // security features that apply a secret code to know this request is coming from this app not on other services 
                     'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
                 },
-                // actual data that will send on the backend 
-                body: JSON.stringify({ user_id: userId }),
+                body: JSON.stringify({ receiver_id: userId }),
             });
 
-            //  checks if backend is succesully process it
             if (response.ok) {
-                const newConvo = await response.json();
+                setIsNewChatModalOpen(false);
+                setUserSearchQuery('');
+                setUserSearchResults([]);
+                alert('Chat request sent!');
+            } else {
+                // if the backend returned an error (like duplicate request), show it
+                const errorData = await response.json();
+                alert(errorData.message || 'Failed to send chat request.');
+            }
+        } catch (error) {
+            console.error("Failed to send chat request", error);
+        }
+    };
 
-                // IMPORTANT: In a real app, the backend should return the fully formatted 
-                // conversation object (with name, avatar, time). 
-                // Since our backend currently just returns the raw model, we will reload the page 
-                // so the ConversationController@index can format everything nicely for us!
+    // accept a chat request
+    const acceptRequest = async (requestId: number) => {
+        try {
+            const response = await fetch(`/chat-requests/${requestId}/accept`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                },
+            });
+
+            if (response.ok) {
+                // reload the page so the new conversation shows up in the sidebar
                 window.location.reload();
             }
         } catch (error) {
-            console.error("Failed to start chat", error);
+            console.error("Failed to accept request", error);
+        }
+    };
+
+    // reject a chat request
+    const rejectRequest = async (requestId: number) => {
+        try {
+            const response = await fetch(`/chat-requests/${requestId}/reject`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                },
+            });
+
+            if (response.ok) {
+                // remove the rejected request from our local state
+                setChatRequests(prev => prev.filter(r => r.id !== requestId));
+            }
+        } catch (error) {
+            console.error("Failed to reject request", error);
         }
     };
 
@@ -317,14 +386,75 @@ export default function Home({ conversations = [] }: { conversations?: Conversat
                     {/* Right: Notifications & Theme Toggle */}
                     <div className="flex-1 flex justify-end items-center gap-1">
                         {/* Notification Bell */}
-                        <button
-                            aria-label="Notifications"
-                            className="relative w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted dark:hover:bg-muted/40 transition-all duration-150"
-                        >
-                            <Bell className="w-5 h-5" />
-                            {/* Badge — shows count of pending chat requests (placeholder for now) */}
-                            {/*<span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold font-sans leading-none">2</span>*/}
-                        </button>
+                        <div className="relative">
+                            <button
+                                onClick={() => setIsNotifOpen(!isNotifOpen)}
+                                aria-label="Notifications"
+                                className="relative w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted dark:hover:bg-muted/40 transition-all duration-150"
+                            >
+                                <Bell className="w-5 h-5" />
+                                {/* Badge — shows the count of pending requests (only if there are any) */}
+                                {chatRequests.length > 0 && (
+                                    <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold font-sans leading-none">
+                                        {chatRequests.length}
+                                    </span>
+                                )}
+                            </button>
+
+                            {/* Notification Dropdown — shows when you click the bell */}
+                            {isNotifOpen && (
+                                <div className="absolute right-0 top-full mt-2 w-80 bg-background border border-border rounded-2xl shadow-xl overflow-hidden z-50">
+                                    <div className="px-4 py-3 border-b border-border">
+                                        <h4 className="font-bold font-sans text-sm text-foreground">Chat Requests</h4>
+                                    </div>
+                                    <div className="max-h-64 overflow-y-auto">
+                                        {chatRequests.length === 0 ? (
+                                            <p className="text-center text-sm text-muted-foreground py-6 font-sans">
+                                                No pending requests.
+                                            </p>
+                                        ) : (
+                                            chatRequests.map(req => (
+                                                <div
+                                                    key={req.id}
+                                                    className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-b-0"
+                                                >
+                                                    {/* Sender avatar (first 2 letters of their name) */}
+                                                    <div className="w-10 h-10 rounded-full bg-accent/20 text-accent dark:text-accent-alt flex items-center justify-center font-bold font-sans flex-shrink-0">
+                                                        {req.sender.name.substring(0, 2).toUpperCase()}
+                                                    </div>
+
+                                                    {/* Sender info */}
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-bold font-sans text-foreground truncate">
+                                                            {req.sender.name}
+                                                        </p>
+                                                        <p className="text-xs font-sans text-muted-foreground truncate">
+                                                            wants to chat with you
+                                                        </p>
+                                                    </div>
+
+                                                    {/* Accept & Reject buttons */}
+                                                    <div className="flex gap-1.5 flex-shrink-0">
+                                                        <button
+                                                            onClick={() => acceptRequest(req.id)}
+                                                            className="px-3 py-1.5 text-xs font-bold font-sans rounded-lg bg-accent dark:bg-accent-alt text-white hover:opacity-90 transition-opacity"
+                                                        >
+                                                            Accept
+                                                        </button>
+                                                        <button
+                                                            onClick={() => rejectRequest(req.id)}
+                                                            className="px-3 py-1.5 text-xs font-bold font-sans rounded-lg bg-muted text-muted-foreground hover:bg-red-500/20 hover:text-red-500 transition-colors"
+                                                        >
+                                                            Reject
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                         {/* Theme Toggle */}
                         <button
                             onClick={toggleTheme}
@@ -354,6 +484,7 @@ export default function Home({ conversations = [] }: { conversations?: Conversat
                                 <button
                                     onClick={() => {
                                         setSearchOpen(!searchOpen);
+
                                         if (searchOpen) {
                                             setSearchQuery('');
                                         }
@@ -539,6 +670,7 @@ export default function Home({ conversations = [] }: { conversations?: Conversat
                                 onClick={() => {
                                     setIsNewChatModalOpen(false);
                                     setUserSearchQuery('');
+                                    setUserSearchResults([]);
                                 }}
                                 className="text-muted-foreground hover:text-foreground text-sm font-sans"
                             >
@@ -552,7 +684,14 @@ export default function Home({ conversations = [] }: { conversations?: Conversat
                                 type="text"
                                 placeholder="Search by name or email..."
                                 value={userSearchQuery}
-                                onChange={(e) => setUserSearchQuery(e.target.value)}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    setUserSearchQuery(value);
+
+                                    if (value.trim() === '') {
+                                        setUserSearchResults([]);
+                                    }
+                                }}
                                 autoFocus
                                 className="w-full px-4 py-2.5 text-sm font-sans rounded-xl bg-muted/50 dark:bg-muted/20 border border-border text-foreground placeholder:text-muted-foreground outline-none focus:border-accent dark:focus:border-accent-alt focus:ring-1 focus:ring-accent/20 transition-all"
                             />

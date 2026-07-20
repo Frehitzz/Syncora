@@ -82,4 +82,29 @@ class User extends Authenticatable implements PasskeyUser
     {
         return $this->belongsToMany(Conversation::class);
     }
+
+    // ========== receivedChatRequests =========
+    /**
+     * Get all chat requests that were sent TO this user
+     * 
+     * THIS IS USE TO COUNT THE USER PENDING REQUEST THAT WILL DISPLAY ON BELL ICON
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<ChatRequest, $this>
+     */
+
+    public function receivedChatRequests(): HasMany{
+        return $this->hasMany(ChatRequest::class, 'receiver_id');
+    }
+
+    // ========== sentChatRequests ===========
+    /**
+     * Get all chat requests that were sent BY this user
+     * 
+     * THIS IS USE TO PREVENT DUPLICATES
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<ChatRequest, $this>
+     */
+    public function snetChatRequests(): HasMany{
+        return $this->hasMany(ChatRequest::class, 'sender_id');
+    }
 }

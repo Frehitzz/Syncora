@@ -187,22 +187,22 @@ Right now, conversations only exist if they were put into the database manually 
 
 ### Feature 2.6 — Chat Request & Accept Notifications
 
-- [ ] Create a `chat_requests` table (sender_id, receiver_id, status: pending/accepted/rejected)
-- [ ] Create a `ChatRequest` model with relationships
-- [ ] Create a `ChatRequestController` with `store`, `accept`, and `reject` methods
-- [ ] Add routes for sending, accepting, and rejecting chat requests
-- [ ] Add a notification bell icon in the header (next to the dark/light mode toggle)
-- [ ] Show a badge count on the bell icon for pending requests
-- [ ] When the bell is clicked, show a dropdown listing pending chat requests
-- [ ] Each request shows the sender's name/email and Accept/Reject buttons
-- [ ] When accepted, create the conversation and add both users to it
-- [ ] When rejected, mark the request as rejected
-- [ ] Prevent duplicate chat requests (can't send a request to someone you already requested)
-- [ ] Update Feature 2.5 flow: instead of creating a conversation immediately, send a chat request first
-- [ ] Write a Pest test for sending a chat request
-- [ ] Write a Pest test for accepting a chat request (conversation is created)
-- [ ] Write a Pest test for rejecting a chat request
-- [ ] Write a Pest test for preventing duplicate requests
+- [ x ] Create a `chat_requests` table (sender_id, receiver_id, status: pending/accepted/rejected)
+- [ x ] Create a `ChatRequest` model with relationships
+- [ x ] Create a `ChatRequestController` with `store`, `accept`, and `reject` methods
+- [ x ] Add routes for sending, accepting, and rejecting chat requests
+- [ x ] Add a notification bell icon in the header (next to the dark/light mode toggle)
+- [ x ] Show a badge count on the bell icon for pending requests
+- [ x ] When the bell is clicked, show a dropdown listing pending chat requests
+- [ x ] Each request shows the sender's name/email and Accept/Reject buttons
+- [ x ] When accepted, create the conversation and add both users to it
+- [ x] When rejected, mark the request as rejected
+- [ x ] Prevent duplicate chat requests (can't send a request to someone you already requested)
+- [ x ] Update Feature 2.5 flow: instead of creating a conversation immediately, send a chat request first
+- [ x ] Write a Pest test for sending a chat request
+- [ x ] Write a Pest test for accepting a chat request (conversation is created)
+- [ x ] Write a Pest test for rejecting a chat request
+- [ x ] Write a Pest test for preventing duplicate requests
 
 **What is this?**
 In Feature 2.5, when you search for a user and click on them, a conversation is created immediately. But in real life, you wouldn't want random strangers to just start chatting with you. This feature adds a **chat request system** — like a friend request. When User A wants to chat with User B, a request is sent. User B sees a notification bell icon in the header with a badge (like "2" for 2 pending requests). When they click the bell, they see who wants to chat and can Accept or Reject. If they accept, the conversation is created and both users can start chatting.
