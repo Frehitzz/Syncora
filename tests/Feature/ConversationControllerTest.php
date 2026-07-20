@@ -68,3 +68,45 @@ test ('all conversations are sent to the frontend for client-side search', funct
 
     
 });
+
+test('user can create a new conversation with another user', function(){
+    /** @var \App\Models\User $user */
+    $user = User::factory()->create();
+
+    /** @var \App\Models\User $otherUser */
+    $otherUser = User::factory()->create();
+
+    /** @var \Tests\TestCase $this */
+    $response = $this->actingAs($user)->postJson(route('conversations.store'),[
+        'user_id' => $otherUser->id
+    ]);
+
+    $response->assertOk();
+
+    // verify the conversation was created and both users are attaced
+    $this->assertDatabaseCount('conversations', 1); // checl if the conversation is succesfullt saved on db
+    $this->assertDatabaseCount('conversation_user', 2); // check if theres 2 new rows on the pivot table coversations_user
+});
+
+test('creating a conversation with an existing partner returns the existing conversation', function () {
+    /** @var \App\Models\User $user */
+    $user = User::factory()->create();
+    
+    /** @var \App\Models\User $otherUser */
+    $otherUser = User::factory()->create();
+
+    // Create an existing conversation
+    $conversation = \App\Models\Conversation::create();
+    $conversation->users()->attach([$user->id, $otherUser->id]);
+
+    // Try to create another one
+    /** @var \Tests\TestCase $this */
+    $response = $this->actingAs($user)->postJson(route('conversations.store'), [
+        'user_id' => $otherUser->id
+    ]);
+
+    $response->assertOk();
+    
+    // Verify NO new conversation was created (count should still be 1)
+    $this->assertDatabaseCount('conversations', 1);
+});

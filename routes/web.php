@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -19,6 +20,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('conversations/{conversation}/messages',
     [MessageController::class, 'store'])
     ->name('conversations.messages.store');
+
+    Route::get('users/search',[UserController::class, 'search'])->name('users.search');
+
+    Route::post('conversations', [ConversationController::class,'store'])->name('conversations.store');
 });
 
 require __DIR__.'/settings.php';

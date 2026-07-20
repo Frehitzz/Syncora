@@ -147,16 +147,16 @@ Create multiple conversations, search for a specific name, and assert only the m
 
 ### Feature 2.5 — Start a New Conversation
 
-- [ ] Create a `store` method in `ConversationController`
-- [ ] Add a backend endpoint to search for users by email or name
-- [ ] Add a "New Chat" button to the left sidebar
-- [ ] Build a modal/popup where the user can search for another user by email
-- [ ] When the user selects someone, create a new conversation (or open the existing one)
-- [ ] Redirect to the new conversation and load it in the chat window
-- [ ] Prevent duplicate conversations between the same two users
-- [ ] Write a Pest test for creating a conversation
-- [ ] Write a Pest test for the user search endpoint
-- [ ] Write a Pest test to verify duplicate conversations are not created
+- [ x ] Create a `store` method in `ConversationController`
+- [ x ] Add a backend endpoint to search for users by email or name
+- [ x ] Add a "New Chat" button to the left sidebar
+- [ x ] Build a modal/popup where the user can search for another user by email
+- [ x ] When the user selects someone, create a new conversation (or open the existing one)
+- [ x ] Redirect to the new conversation and load it in the chat window
+- [ x ] Prevent duplicate conversations between the same two users
+- [ x ] Write a Pest test for creating a conversation
+- [ x ] Write a Pest test for the user search endpoint
+- [ x ] Write a Pest test to verify duplicate conversations are not created
 
 **What is this?**
 Right now, conversations only exist if they were put into the database manually (via seeders). There is no way for a real user to start chatting with someone new. This feature adds a "New Chat" button to the sidebar. When you click it, a popup appears where you can search for a user by their email address. If you find them, a new conversation is created and you can start messaging right away.

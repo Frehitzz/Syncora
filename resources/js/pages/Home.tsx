@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { Moon, Sun, Search, MoreHorizontal, Info, Phone, Video, Bell } from 'lucide-react';
+import { Moon, Sun, Search, MoreHorizontal, Info, Phone, Video, Bell, Edit } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAppearance } from '@/hooks/use-appearance';
 
@@ -101,6 +101,11 @@ function MessageBubble({ message }: { message: Message }) {
 }
 
 // --- Main Messages Component ---
+interface UserSearchResult {
+    id: number;
+    name: string;
+    email: string;
+}
 
 // ========== Home ===========
 // The main page component representing the home dashboard containing the Facebook-like UI (header, sidebar, chat window).
@@ -130,6 +135,78 @@ export default function Home({ conversations = [] }: { conversations?: Conversat
 
     // tracks the search query text
     const [searchQuery, setSearchQuery] = useState('');
+
+    // ======== NEW CHAT MODAL STATE ==========
+    const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false);
+    const [userSearchQuery, setUserSearchQuery] = useState('');
+    const [userSearchResults, setUserSearchResults] = useState<UserSearchResult[]>([]);
+    const [isSearchingUsers, setIsSearchingUsers] = useState(false);
+
+    // every time you type it automatically display the users realtime
+    useEffect(() => {
+        // if input is clear, clear the results
+        if (userSearchQuery.trim() === '') {
+            setUserSearchResults([]);
+            return;
+        }
+
+        // define search function
+        const searchUsers = async () => {
+            setIsSearchingUsers(true);
+            // turn on loading spinner
+            try {
+                // go to the backend route 
+                const response = await fetch(`/users/search?query=${encodeURIComponent(userSearchQuery)}`);
+                // convert the backend response to json
+                if (response.ok) {
+                    const data = await response.json();
+                    setUserSearchResults(data); // save the users we found so react can display them
+                }
+            } catch (error) {
+                console.error("Failed to search users", error);
+            } finally {
+                // turn off the loading spinner
+                setIsSearchingUsers(false);
+            }
+        };
+
+        // to let user finish the typing before display results
+        const delayTimer = setTimeout(searchUsers, 300);
+        return () => clearTimeout(delayTimer);
+    }, [userSearchQuery]);
+
+    // send request to create a new conversation with the selected user
+    // get the id of what the user click on the search results it gets that user id
+    const startNewChat = async (userId: number) => {
+        try {
+            // BUILT INT JAVASCRIPT FETCH FEATURES
+            const response = await fetch('/conversations', {
+                method: 'POST',
+                // LIKE AN ENVELOPE OF A LETTER
+                headers: {
+                    // tells laravel the data inside is formatted as json
+                    'Content-Type': 'application/json',
+                    // security features that apply a secret code to know this request is coming from this app not on other services 
+                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                },
+                // actual data that will send on the backend 
+                body: JSON.stringify({ user_id: userId }),
+            });
+
+            //  checks if backend is succesully process it
+            if (response.ok) {
+                const newConvo = await response.json();
+
+                // IMPORTANT: In a real app, the backend should return the fully formatted 
+                // conversation object (with name, avatar, time). 
+                // Since our backend currently just returns the raw model, we will reload the page 
+                // so the ConversationController@index can format everything nicely for us!
+                window.location.reload();
+            }
+        } catch (error) {
+            console.error("Failed to start chat", error);
+        }
+    };
 
     // ======== FILTERED CONVERSATIONS ==========
     // filters the conversation list based on the search query (case-insensitive)
@@ -290,6 +367,14 @@ export default function Home({ conversations = [] }: { conversations?: Conversat
                                 >
                                     <Search className="w-4 h-4" />
                                 </button>
+                                {/* New Chat Button */}
+                                <button
+                                    onClick={() => setIsNewChatModalOpen(true)}
+                                    aria-label="New chat"
+                                    className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted dark:hover:bg-muted/40 transition-all"
+                                >
+                                    <Edit className="w-4 h-4" />
+                                </button>
                                 {/* More Options Button */}
                                 <button
                                     aria-label="More options"
@@ -441,6 +526,68 @@ export default function Home({ conversations = [] }: { conversations?: Conversat
 
                 </div>
             </div>
+
+            {/* ── New Chat Modal Overlay ── */}
+            {isNewChatModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-background border border-border w-full max-w-md rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[80vh]">
+                        
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+                            <h3 className="font-bold font-sans text-foreground">Start New Chat</h3>
+                            <button 
+                                onClick={() => {
+                                    setIsNewChatModalOpen(false);
+                                    setUserSearchQuery('');
+                                }}
+                                className="text-muted-foreground hover:text-foreground text-sm font-sans"
+                            >
+                                Close
+                            </button>
+                        </div>
+
+                        {/* Modal Body - Search Input */}
+                        <div className="p-4 border-b border-border">
+                            <input
+                                type="text"
+                                placeholder="Search by name or email..."
+                                value={userSearchQuery}
+                                onChange={(e) => setUserSearchQuery(e.target.value)}
+                                autoFocus
+                                className="w-full px-4 py-2.5 text-sm font-sans rounded-xl bg-muted/50 dark:bg-muted/20 border border-border text-foreground placeholder:text-muted-foreground outline-none focus:border-accent dark:focus:border-accent-alt focus:ring-1 focus:ring-accent/20 transition-all"
+                            />
+                        </div>
+
+                        {/* Modal Body - Search Results */}
+                        <div className="flex-1 overflow-y-auto p-2 scrollbar-thin">
+                            {isSearchingUsers ? (
+                                <p className="text-center text-sm text-muted-foreground py-8 font-sans">Searching...</p>
+                            ) : userSearchResults.length > 0 ? (
+                                userSearchResults.map(user => (
+                                    <button
+                                        key={user.id}
+                                        onClick={() => startNewChat(user.id)}
+                                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-muted/60 dark:hover:bg-muted/20 rounded-xl transition-colors"
+                                    >
+                                        <div className="w-10 h-10 rounded-full bg-accent/20 text-accent dark:text-accent-alt flex items-center justify-center font-bold font-sans flex-shrink-0">
+                                            {user.name.substring(0, 2).toUpperCase()}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-bold font-sans text-foreground truncate">{user.name}</p>
+                                            <p className="text-xs font-sans text-muted-foreground truncate">{user.email}</p>
+                                        </div>
+                                    </button>
+                                ))
+                            ) : userSearchQuery !== '' ? (
+                                <p className="text-center text-sm text-muted-foreground py-8 font-sans">No users found.</p>
+                            ) : (
+                                <p className="text-center text-sm text-muted-foreground py-8 font-sans">Type a name to search.</p>
+                            )}
+                        </div>
+
+                    </div>
+                </div>
+            )}
         </>
     );
 }

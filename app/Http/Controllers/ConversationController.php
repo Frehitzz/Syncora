@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Conversation;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -49,5 +50,38 @@ class ConversationController extends Controller
         });
 
         return Inertia::render('Home', ['conversations' => $conversations,]);
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        $request->validate(['user_id' => ['required','exists:users,id']]);
+
+        /** @var \App\Models\User $user*/
+        $user = $request->user(); // currently logged in user
+        $otherUserId = $request->input('user_id'); // the user that wants to interact with these current logged in user
+
+        // check if theres a conversation between two users exist
+        // to prevent creating duplicates
+        $existingConversation = $user->conversations()
+        ->whereHas('users', function($q) use ($otherUserId){
+            $q->where('users.id', $otherUserId);
+        })
+        ->first();
+
+        // checks if they have exist, and just return it
+        if ($existingConversation){
+            return response()->json($existingConversation);
+        }
+
+        // if they dont have existing convo, create it
+        $conversation = Conversation::create();
+
+        // attach both user to this new conversation
+        $conversation->users()->attach([$user->id, $otherUserId]);
+
+        return response()->json($conversation);
+
+        
+
     }
 }
