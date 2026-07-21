@@ -248,11 +248,11 @@ In Feature 2.5, when you search for a user and click on them, a conversation is 
 
 ### Feature 3.1 — Set Up Laravel Reverb (WebSocket Server)
 
-- [ ] Install Laravel Reverb
-- [ ] Configure the `.env` file with Reverb settings
-- [ ] Install Laravel Echo on the frontend
-- [ ] Verify the WebSocket connection works in the browser console
-- [ ] Write a test to confirm events are broadcastable
+- [ x ] Install Laravel Reverb
+- [ x ] Configure the `.env` file with Reverb settings
+- [ x ] Install Laravel Echo on the frontend
+- [ x ] Verify the WebSocket connection works in the browser console
+- [ x ] Write a test to confirm events are broadcastable
 
 **What is this?**
 Laravel Reverb is a WebSocket server built for Laravel. It allows your app to push data to the browser instantly (without the user needing to refresh). Think of it like a phone call — the connection stays open so both sides can talk in real-time.
