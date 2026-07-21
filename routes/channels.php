@@ -1,9 +1,33 @@
 <?php
 
+use App\Models\Conversation;
 use Illuminate\Support\Facades\Broadcast;
 
 // only let user listen to this private websocket channel
 // if their acutal logged-in user id matches the id in the channel name
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
+
+});
+
+/**
+ * AUTHORIZE THE CONVERSATION PRIVATE CHANNEL
+ * - only allow a user to listen if they are a participant
+ * of this conversation
+*/
+Broadcast::channel('conversation.{conversationId}', function ($user,
+$conversationId){
+
+    // find the conversation in db
+    /** @var \App\Models\Conversation|null $conversation */
+    $conversation = Conversation::query()->find($conversationId);
+
+    // if conversation doesnt exist, deny access
+    if (! $conversation){
+        return false;
+    }
+
+    // check if logged in user is in the conversation
+    // if yes, return tru (access granted), if no, false (denied)
+    return $conversation->users()->where('user_id', $user->id)->exists();
 });

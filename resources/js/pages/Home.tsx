@@ -322,6 +322,7 @@ export default function Home({ conversations = [] }: { conversations?: Conversat
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    'X-Socket-ID': window.Echo ? window.Echo.socketId() : '',
                 },
                 body: JSON.stringify({ body: newMessage }),
             });
@@ -342,6 +343,30 @@ export default function Home({ conversations = [] }: { conversations?: Conversat
             console.error('Failed to send message:', error);
         }
     };
+
+    // ========== REAL-TIME MESSAGE LISTENER ==========
+    // Whenever the active conversation changes, we subscribe to its WebSocket channel.
+    // When a new MessageSent event arrives, we add the message to the chat.
+    useEffect(() => {
+        // Don't set up a listener if there's no active conversation
+        if (!activeConvo) return;
+
+        // Subscribe to the private channel for this conversation
+        // "private" means the user must be authorized (checked in channels.php)
+        const channel = window.Echo.private(`conversation.${activeConvo.id}`)
+            .listen('MessageSent', (data: Message) => {
+                // "data" contains everything we returned in broadcastWith():
+                // Add the incoming message to the end of the chat list
+                setChatMessages((prev) => [...prev, data]);
+            });
+
+        // CLEANUP FUNCTION:
+        // When the user clicks a different conversation (activeConvo changes),
+        // React will run this cleanup function FIRST to unsubscribe from the old channel.
+        return () => {
+            window.Echo.leave(`conversation.${activeConvo.id}`);
+        };
+    }, [activeConvo]); // Re-run this effect every time activeConvo changes
 
     // auto display messages for the first conversation when the page loads
     useEffect(() => {

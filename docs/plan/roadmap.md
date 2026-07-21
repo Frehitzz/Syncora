@@ -268,12 +268,12 @@ Laravel Reverb is a WebSocket server built for Laravel. It allows your app to pu
 
 ### Feature 3.2 — Real-Time Message Delivery
 
-- [ ] Create a `MessageSent` event
-- [ ] Make the event implement `ShouldBroadcast`
-- [ ] Fire the event when a message is saved
-- [ ] Listen for the event in React using Laravel Echo
-- [ ] New messages appear instantly on the other user's screen
-- [ ] Write a Pest test to verify the event is dispatched
+- [ x ] Create a `MessageSent` event
+- [ x ] Make the event implement `ShouldBroadcast`
+- [ x ] Fire the event when a message is saved
+- [ x ] Listen for the event in React using Laravel Echo
+- [ x ] New messages appear instantly on the other user's screen
+- [ x ] Write a Pest test to verify the event is dispatched
 
 **What is this?**
 When User A sends a message, it should pop up on User B's screen immediately — without User B refreshing the page. This is the core of real-time messaging.

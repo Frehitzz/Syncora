@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\MessageSent;
 use App\Models\Conversation;
 use App\Models\Message;
 use Illuminate\Http\JsonResponse;
@@ -46,7 +47,7 @@ class MessageController extends Controller
     }
 
     // =========== store =========
-    // validate, save, and return a new message for the other convo
+    // validate, save, and broadcast a new message for the other convo
     public function store(Request $request, Conversation $conversation): JsonResponse
     {
         /** @var \App\Models\User $user */
@@ -75,6 +76,20 @@ class MessageController extends Controller
             'body' => $validated['body'],
             'is_read' => false,
         ]);
+
+        /**
+         * EAGER LOADING
+         * tellling it to go to the users table and fetch senders name 
+         * and attach it to the $message object
+         * 
+         * WHY?
+         * so when broadcastWith() calls $this->message->sender->name,
+         * we dont need extra db query
+        */
+        $message->load('sender');
+
+        // fire messageevent and broadcast to everyone ELSE in the room (not the sender)
+        broadcast(new MessageSent($message))->toOthers();
 
         // return the translated format that frontend expects
         return response()->json([
