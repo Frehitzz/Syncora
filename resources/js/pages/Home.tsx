@@ -8,6 +8,7 @@ import { useAppearance } from '@/hooks/use-appearance';
 // "we have an id that is a number , a name that is string etc"
 interface Conversation {
     id: number;
+    otherUserId: number | null;
     name: string;
     lastMessage: string;
     time: string;
@@ -168,6 +169,11 @@ export default function Home({ conversations = [] }: { conversations?: Conversat
     // ======== CHAT REQUEST NOTIFICATION STATE ==========
     const [chatRequests, setChatRequests] = useState<ChatRequestData[]>([]);
     const [isNotifOpen, setIsNotifOpen] = useState(false);
+
+    // ======== ONLINE USERS STATE ==========
+    // Tracks which user IDs are currently online via presence channel
+    // This is a Set because we only need to check "is this user online?" (fast lookups)
+    const [onlineUserIds, setOnlineUserIds] = useState<Set<number>>(new Set());
 
     // every time you type it automatically display the users realtime
     useEffect(() => {
@@ -393,6 +399,40 @@ return prev;
         };
     }, [activeConvo]); // Re-run this effect every time activeConvo changes
 
+    // ========== PRESENCE CHANNEL — ONLINE STATUS ==========
+    // Join the presence channel once when the component mounts.
+    // This tracks who is currently connected to the app.
+    useEffect(() => {
+        // Join the presence channel — Echo adds the "presence-" prefix automatically
+        const channel = window.Echo.join('chat')
+            // Called ONCE when we first connect — gives us everyone already online
+            .here((users: { id: number; name: string }[]) => {
+                // Build a Set from the array of user objects
+                setOnlineUserIds(new Set(users.map((u) => u.id)));
+            })
+            // Called every time a NEW user comes online after us
+            .joining((user: { id: number; name: string }) => {
+                setOnlineUserIds((prev) => {
+                    const next = new Set(prev); // clone the Set (React needs a new reference to re-render)
+                    next.add(user.id);
+                    return next;
+                });
+            })
+            // Called every time a user goes offline (closes tab, disconnects)
+            .leaving((user: { id: number; name: string }) => {
+                setOnlineUserIds((prev) => {
+                    const next = new Set(prev); // clone
+                    next.delete(user.id);
+                    return next;
+                });
+            });
+
+        // CLEANUP: when the component unmounts (user navigates away), leave the channel
+        return () => {
+            channel.leave();
+        };
+    }, []); // Empty array = run once on mount, clean up on unmount
+
     // auto display messages for the first conversation when the page loads
     useEffect(() => {
         if (conversations.length > 0) {
@@ -588,7 +628,10 @@ return prev;
                                 filteredConversations.map((convo) => (
                                     <div key={convo.id} onClick={() => selectConversation(convo)}>
                                         <ConversationItem
-                                            convo={convo}
+                                            convo={{
+                                                ...convo,
+                                                online: convo.otherUserId !== null && onlineUserIds.has(convo.otherUserId),
+                                            }}
                                             active={activeConvo !== null && convo.id === activeConvo.id}
                                         />
                                     </div>
@@ -609,11 +652,21 @@ return prev;
                             {/* Left: Active User Info */}
                             {activeConvo ? (
                                 <div className="flex items-center gap-3">
-                                    <Avatar initials={activeConvo.avatar} online={activeConvo.online} size="lg" />
+                                    <Avatar
+                                        initials={activeConvo.avatar}
+                                        online={activeConvo.otherUserId !== null && onlineUserIds.has(activeConvo.otherUserId)}
+                                        size="lg"
+                                    />
                                     <div>
                                         <p className="text-sm font-bold font-sans text-foreground">{activeConvo.name}</p>
-                                        <p className="text-xs font-sans text-green-500">
-                                            {activeConvo.online ? 'Active now' : 'Offline'}
+                                        <p className={`text-xs font-sans ${
+                                            activeConvo.otherUserId !== null && onlineUserIds.has(activeConvo.otherUserId)
+                                                ? 'text-green-500'
+                                                : 'text-muted-foreground'
+                                        }`}>
+                                            {activeConvo.otherUserId !== null && onlineUserIds.has(activeConvo.otherUserId)
+                                                ? 'Active now'
+                                                : 'Offline'}
                                         </p>
                                     </div>
                                 </div>

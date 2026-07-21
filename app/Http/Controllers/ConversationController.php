@@ -40,6 +40,7 @@ class ConversationController extends Controller
 
             return [
                 'id' => $conversation->id,
+                'otherUserId' => $otherUser ? $otherUser->id : null,
                 'name' => $otherUser ? $otherUser->name : 'Saved Messages',
                 'lastMessage' => $lastMessage ? $lastMessage->body : '',
                 'time' => $lastMessage ? $lastMessage->created_at->diffForHumans(short: true): '',

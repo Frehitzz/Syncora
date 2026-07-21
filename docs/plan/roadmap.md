@@ -291,10 +291,10 @@ Use `Event::fake()` in Pest, send a message, and assert that `MessageSent` was d
 
 ### Feature 3.3 — Online/Offline Status (Presence Channels)
 
-- [ ] Set up a Presence Channel
-- [ ] Track which users are online using Redis
-- [ ] Update the green dot on the avatar in real-time
-- [ ] Write a test for user presence
+- [ x ] Set up a Presence Channel
+- [ x ] Track which users are online using Redis
+- [ x ] Update the green dot on the avatar in real-time
+- [ x ] Write a test for user presence
 
 **What is this?**
 The UI shows a green dot on avatars to indicate if a user is online. Right now it is fake. We need to detect when users are actually connected and update the dot dynamically.

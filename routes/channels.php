@@ -31,3 +31,16 @@ $conversationId){
     // if yes, return tru (access granted), if no, false (denied)
     return $conversation->users()->where('user_id', $user->id)->exists();
 });
+
+/**
+ * === AUTHORIZE THE PRESENCE CHANNEL FOR ONLINE STATUS
+ * - every authernticated user can join this channel
+ * - returned array is the id card that other users see
+*/
+Broadcast::channel('chat', function ($user){
+    // return the user's data
+    return [
+        'id' => $user->id,
+        'name' => $user->name,
+    ];
+});
