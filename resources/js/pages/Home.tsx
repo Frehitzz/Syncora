@@ -1,6 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { Moon, Sun, Search, MoreHorizontal, Info, Phone, Video, Bell, Edit } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAppearance } from '@/hooks/use-appearance';
 
 // ========== STRICT CONTRACT BLUEPRINT FOR THE DATA THAT LARAVEL WILL SEND =======
@@ -147,6 +147,17 @@ export default function Home({ conversations = [] }: { conversations?: Conversat
 
     // tracks the search query text
     const [searchQuery, setSearchQuery] = useState('');
+
+    // ======== AUTO-SCROLL TO BOTTOM ==========
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    // Trigger auto-scroll whenever chat messages change
+    useEffect(() => {
+        scrollToBottom();
+    }, [chatMessages]);
 
     // ======== NEW CHAT MODAL STATE ==========
     const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false);
@@ -349,15 +360,29 @@ export default function Home({ conversations = [] }: { conversations?: Conversat
     // When a new MessageSent event arrives, we add the message to the chat.
     useEffect(() => {
         // Don't set up a listener if there's no active conversation
-        if (!activeConvo) return;
+        if (!activeConvo) {
+return;
+}
 
         // Subscribe to the private channel for this conversation
         // "private" means the user must be authorized (checked in channels.php)
-        const channel = window.Echo.private(`conversation.${activeConvo.id}`)
+        window.Echo.private(`conversation.${activeConvo.id}`)
             .listen('MessageSent', (data: Message) => {
-                // "data" contains everything we returned in broadcastWith():
-                // Add the incoming message to the end of the chat list
-                setChatMessages((prev) => [...prev, data]);
+                // "data" contains everything we returned in broadcastWith()
+                
+                setChatMessages((prev) => {
+                    // PREVENT DUPLICATES: React StrictMode (during development) 
+                    // sometimes registers the WebSocket listener twice. 
+                    // This ensures we never add the same message ID twice!
+                    const isDuplicate = prev.some((msg) => msg.id === data.id);
+
+                    if (isDuplicate) {
+return prev;
+}
+
+                    // Add the incoming message to the end of the chat list
+                    return [...prev, data];
+                });
             });
 
         // CLEANUP FUNCTION:
@@ -639,6 +664,9 @@ export default function Home({ conversations = [] }: { conversations?: Conversat
                                     ) : (
                                         <p className="text-center text-sm text-muted-foreground font-sans py-8">No messages yet. Say hello! 👋</p>
                                     )}
+                                    
+                                    {/* Invisible div to scroll to */}
+                                    <div ref={messagesEndRef} />
                                 </>
                             ) : (
                                 <div className="flex-1 flex items-center justify-center">

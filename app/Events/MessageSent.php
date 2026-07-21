@@ -31,6 +31,9 @@ class MessageSent implements ShouldBroadcast{
 
     // ======= broadcastWith ========
 
+    /**
+     * @return array<string, mixed>
+     */
     public function broadcastWith(): array{
         return [
             'id' => $this->message->id,
