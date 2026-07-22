@@ -46,7 +46,11 @@ Example:
 ```
 
 ## CI Testing Rule (Frontend Linting & Backend Testing)
-To avoid CI errors, you MUST run the appropriate testing/linting commands after making changes and before committing:
+To avoid CI errors, you MUST run the appropriate testing/linting commands after making changes and before committing.
+
+> [!CAUTION]
+> **NO EXCEPTIONS FOR "TRIVIAL" CHANGES.** Even if you only changed one line of code, you MUST run the CI check before declaring a task complete.
+
 - The standard unified check is: `composer ci:check`
 - Alternatively, for frontend-only (React/TypeScript) changes, run: `npm run lint`
 - Alternatively, for backend-only (PHP/Laravel) changes, run: `php artisan test` or `composer test`

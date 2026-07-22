@@ -145,6 +145,28 @@ function MessageBubble({ message }: { message: Message }) {
     );
 }
 
+// ========== Typing Indicator ===========
+// Displays a bouncing 3-dot animation inside a message bubble when the other user is typing.
+function TypingIndicator({ name }: { name: string }) {
+    const initials = name ? name.substring(0, 2).toUpperCase() : '...';
+
+    return (
+        <div className="flex flex-row items-end gap-2">
+            <Avatar initials={initials} size="sm" />
+            <div className="group max-w-[60%]">
+                <div className="flex h-[38px] items-center gap-1.5 rounded-2xl rounded-bl-md bg-muted px-4 py-2.5 dark:bg-muted/50">
+                    <div className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/70 [animation-delay:-0.3s]"></div>
+                    <div className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/70 [animation-delay:-0.15s]"></div>
+                    <div className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/70"></div>
+                </div>
+                <p className="mt-1 text-left font-sans text-[10px] text-muted-foreground">
+                    {name} is typing...
+                </p>
+            </div>
+        </div>
+    );
+}
+
 // --- Main Messages Component ---
 interface UserSearchResult {
     id: number;
@@ -243,6 +265,13 @@ export default function Home({
     // tracks the name of the user who is currently typing in the active conversation
     // null means nobody is typing (hide the indicator)
     const [typingUser, setTypingUser] = useState<string | null>(null);
+
+    // Trigger auto-scroll whenever the typing indicator appears
+    useEffect(() => {
+        if (typingUser) {
+            scrollToBottom();
+        }
+    }, [typingUser]);
 
     // every time you type it automatically display the users realtime
     useEffect(() => {
@@ -870,32 +899,25 @@ export default function Home({
                                         <p className="font-sans text-sm font-bold text-foreground">
                                             {activeConvo.name}
                                         </p>
-                                        {/* ── Typing indicator OR online status ── */}
-                                        {typingUser /* ← ADD: show typing indicator if someone is typing */ ? (
-                                            <p className="animate-pulse font-sans text-xs text-accent dark:text-accent-alt">
-                                                {typingUser} is typing...
-                                            </p>
-                                        ) : (
-                                            <p
-                                                className={`font-sans text-xs ${
-                                                    activeConvo.otherUserId !==
-                                                        null &&
-                                                    onlineUserIds.has(
-                                                        activeConvo.otherUserId,
-                                                    )
-                                                        ? 'text-green-500'
-                                                        : 'text-muted-foreground'
-                                                }`}
-                                            >
-                                                {activeConvo.otherUserId !==
+                                        {/* ── Online status ── */}
+                                        <p
+                                            className={`font-sans text-xs ${
+                                                activeConvo.otherUserId !==
                                                     null &&
                                                 onlineUserIds.has(
                                                     activeConvo.otherUserId,
                                                 )
-                                                    ? 'Active now'
-                                                    : 'Offline'}
-                                            </p>
-                                        )}
+                                                    ? 'text-green-500'
+                                                    : 'text-muted-foreground'
+                                            }`}
+                                        >
+                                            {activeConvo.otherUserId !== null &&
+                                            onlineUserIds.has(
+                                                activeConvo.otherUserId,
+                                            )
+                                                ? 'Active Now'
+                                                : 'Offline'}
+                                        </p>
                                     </div>
                                 </div>
                             ) : (
@@ -955,6 +977,11 @@ export default function Home({
                                         <p className="py-8 text-center font-sans text-sm text-muted-foreground">
                                             No messages yet. Say hello! 👋
                                         </p>
+                                    )}
+
+                                    {/* Typing Indicator */}
+                                    {typingUser && (
+                                        <TypingIndicator name={typingUser} />
                                     )}
 
                                     {/* Invisible div to scroll to */}
