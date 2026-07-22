@@ -11,9 +11,11 @@ import {
     Edit,
     PanelLeftClose,
     PanelLeftOpen,
+    LogOut,
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useAppearance } from '@/hooks/use-appearance';
+import { logout } from '@/routes';
 
 // ========== STRICT CONTRACT BLUEPRINT FOR THE DATA THAT LARAVEL WILL SEND =======
 // we telling react what the conversation data will looks like:
@@ -519,7 +521,7 @@ export default function Home({
     // This tracks who is currently connected to the app.
     useEffect(() => {
         // Join the presence channel — Echo adds the "presence-" prefix automatically
-        const channel = window.Echo.join('chat')
+        window.Echo.join('chat')
             // Called ONCE when we first connect — gives us everyone already online
             .here((users: { id: number; name: string }[]) => {
                 // Build a Set from the array of user objects
@@ -546,7 +548,7 @@ export default function Home({
 
         // CLEANUP: when the component unmounts (user navigates away), leave the channel
         return () => {
-            channel.leave();
+            window.Echo.leave('chat');
         };
     }, []); // Empty array = run once on mount, clean up on unmount
 
@@ -694,6 +696,17 @@ export default function Home({
                                 <Moon className="h-5 w-5" />
                             )}
                         </button>
+
+                        {/* Logout Button */}
+                        <Link
+                            href={logout()}
+                            method="post"
+                            as="button"
+                            aria-label="Log out"
+                            className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-all duration-150 hover:bg-red-500/10 hover:text-red-500 dark:hover:bg-red-500/20"
+                        >
+                            <LogOut className="h-5 w-5" />
+                        </Link>
                     </div>
                 </header>
 

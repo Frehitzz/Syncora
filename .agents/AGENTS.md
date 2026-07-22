@@ -46,10 +46,11 @@ Example:
 ```
 
 ## CI Testing Rule (Frontend Linting & Backend Testing)
-To avoid CI errors, you MUST run the appropriate testing/linting commands before committing any changes:
-- For frontend (React/TypeScript) changes, run: `npm run lint`
-- For backend (PHP/Laravel) changes, run: `php artisan test` or `composer test`
-Always fix any ESLint warnings or failing tests before creating a commit.
+To avoid CI errors, you MUST run the appropriate testing/linting commands after making changes and before committing:
+- The standard unified check is: `composer ci:check`
+- Alternatively, for frontend-only (React/TypeScript) changes, run: `npm run lint`
+- Alternatively, for backend-only (PHP/Laravel) changes, run: `php artisan test` or `composer test`
+If any tests fail or linting errors occur due to your changes, you MUST update the affected tests or fix the linting errors before proceeding or creating a commit.
 
 # Repository Guidelines
 
