@@ -9,6 +9,8 @@ import {
     Video,
     Bell,
     Edit,
+    PanelLeftClose,
+    PanelLeftOpen,
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useAppearance } from '@/hooks/use-appearance';
@@ -74,41 +76,41 @@ function Avatar({
 function ConversationItem({
     convo,
     active,
+    isCollapsed = false,
 }: {
     convo: Conversation;
     active: boolean;
+    isCollapsed?: boolean;
 }) {
     return (
         <button
-            className={`mx-1 flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition-all duration-150 ${
-                active
-                    ? 'bg-accent/10 dark:bg-accent-alt/10'
-                    : 'hover:bg-muted/60 dark:hover:bg-muted/20'
-            }`}
+            className={`flex items-center ${isCollapsed ? 'mx-auto w-12 justify-center' : 'w-full gap-3 px-4'} py-3 text-left`}
         >
             <Avatar initials={convo.avatar} online={convo.online} />
-            <div className="min-w-0 flex-1">
-                <div className="flex items-baseline justify-between">
-                    <span
-                        className={`truncate font-sans text-sm font-semibold ${active ? 'text-accent dark:text-accent-alt' : 'text-foreground'}`}
-                    >
-                        {convo.name}
-                    </span>
-                    <span className="ml-2 flex-shrink-0 font-sans text-xs text-muted-foreground">
-                        {convo.time}
-                    </span>
-                </div>
-                <div className="mt-0.5 flex items-center justify-between">
-                    <span className="truncate font-sans text-xs text-muted-foreground">
-                        {convo.lastMessage}
-                    </span>
-                    {convo.unread > 0 && (
-                        <span className="ml-2 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-accent font-sans text-[10px] font-bold text-white dark:bg-accent-alt">
-                            {convo.unread}
+            {!isCollapsed && (
+                <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline justify-between">
+                        <span
+                            className={`truncate font-sans text-sm font-semibold ${active ? 'text-accent dark:text-accent-alt' : 'text-foreground'}`}
+                        >
+                            {convo.name}
                         </span>
-                    )}
+                        <span className="ml-2 flex-shrink-0 font-sans text-xs text-muted-foreground">
+                            {convo.time}
+                        </span>
+                    </div>
+                    <div className="mt-0.5 flex items-center justify-between">
+                        <span className="truncate font-sans text-xs text-muted-foreground">
+                            {convo.lastMessage}
+                        </span>
+                        {convo.unread > 0 && (
+                            <span className="ml-2 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-accent font-sans text-[10px] font-bold text-white dark:bg-accent-alt">
+                                {convo.unread}
+                            </span>
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
         </button>
     );
 }
@@ -183,6 +185,9 @@ export default function Home({
     const [activeConvo, setActiveConvo] = useState<Conversation | null>(
         conversations[0] || null,
     );
+
+    // Sidebar collapse state
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
     // useState<Message[]>([]) - start as an empty array bc we havent loadded any messages yet
     const [chatMessages, setChatMessages] = useState<Message[]>([]);
@@ -694,52 +699,86 @@ export default function Home({
 
                 {/* ── Body ── */}
                 <div className="flex flex-1 overflow-hidden">
-                    {/* ── Left Column (30%) — Conversation List ── */}
-                    <aside className="flex w-[30%] flex-shrink-0 flex-col overflow-hidden border-r border-border bg-background">
+                    {/* ── Left Column — Conversation List ── */}
+                    <aside
+                        className={`flex ${isSidebarCollapsed ? 'w-[80px]' : 'w-[30%]'} flex-shrink-0 flex-col overflow-hidden border-r border-border bg-background transition-all duration-300`}
+                    >
                         {/* Left Top Bar */}
-                        <div className="flex flex-shrink-0 items-center justify-between border-b border-border px-4 py-3">
-                            <h2 className="font-sans text-base font-bold text-foreground">
-                                Messages
-                            </h2>
-                            <div className="flex items-center gap-2">
-                                {/* Search Button */}
-                                <button
-                                    onClick={() => {
-                                        setSearchOpen(!searchOpen);
-
-                                        if (searchOpen) {
-                                            setSearchQuery('');
-                                        }
-                                    }}
-                                    aria-label="Search conversations"
-                                    className={`flex h-8 w-8 items-center justify-center rounded-full transition-all ${
-                                        searchOpen
-                                            ? 'bg-accent/10 text-accent dark:bg-accent-alt/10 dark:text-accent-alt'
-                                            : 'text-muted-foreground hover:bg-muted hover:text-foreground dark:hover:bg-muted/40'
-                                    }`}
-                                >
-                                    <Search className="h-4 w-4" />
-                                </button>
-                                {/* New Chat Button */}
-                                <button
-                                    onClick={() => setIsNewChatModalOpen(true)}
-                                    aria-label="New chat"
-                                    className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-all hover:bg-muted hover:text-foreground dark:hover:bg-muted/40"
-                                >
-                                    <Edit className="h-4 w-4" />
-                                </button>
-                                {/* More Options Button */}
-                                <button
-                                    aria-label="More options"
-                                    className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-all hover:bg-muted hover:text-foreground dark:hover:bg-muted/40"
-                                >
-                                    <MoreHorizontal className="h-4 w-4" />
-                                </button>
-                            </div>
+                        <div
+                            className={`flex flex-shrink-0 items-center border-b border-border px-4 py-3 ${isSidebarCollapsed ? 'justify-center' : 'justify-between'}`}
+                        >
+                            {!isSidebarCollapsed && (
+                                <h2 className="font-sans text-base font-bold text-foreground">
+                                    Messages
+                                </h2>
+                            )}
+                            <button
+                                onClick={() =>
+                                    setIsSidebarCollapsed(!isSidebarCollapsed)
+                                }
+                                aria-label="Toggle Sidebar"
+                                className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-all hover:bg-muted hover:text-foreground dark:hover:bg-muted/40"
+                            >
+                                {isSidebarCollapsed ? (
+                                    <PanelLeftOpen className="h-4 w-4" />
+                                ) : (
+                                    <PanelLeftClose className="h-4 w-4" />
+                                )}
+                            </button>
                         </div>
+                        {/* Top Bar was here, Search Input Bar removed from here */}
+
+                        {/* Conversation List 
+                            - it display each convo on the left sidebar by the map().
+                            - if user click each convo it will display the messaes of the convo by running selectConversation
+                        */}
+                        <div className="flex-1 scrollbar-thin space-y-0.5 overflow-x-hidden overflow-y-auto px-1 py-2">
+                            {filteredConversations.length > 0 ? (
+                                filteredConversations.map((convo) => {
+                                    const isActive =
+                                        activeConvo !== null &&
+                                        convo.id === activeConvo.id;
+
+                                    return (
+                                        <div
+                                            key={convo.id}
+                                            onClick={() =>
+                                                selectConversation(convo)
+                                            }
+                                            className={`cursor-pointer rounded-xl transition-all duration-150 ${
+                                                isActive
+                                                    ? 'bg-accent/10 dark:bg-accent-alt/10'
+                                                    : 'hover:bg-muted/60 dark:hover:bg-muted/20'
+                                            }`}
+                                        >
+                                            <ConversationItem
+                                                convo={{
+                                                    ...convo,
+                                                    online:
+                                                        convo.otherUserId !==
+                                                            null &&
+                                                        onlineUserIds.has(
+                                                            convo.otherUserId,
+                                                        ),
+                                                }}
+                                                active={isActive}
+                                                isCollapsed={isSidebarCollapsed}
+                                            />
+                                        </div>
+                                    );
+                                })
+                            ) : (
+                                <p className="py-8 text-center font-sans text-sm text-muted-foreground">
+                                    {searchOpen
+                                        ? 'No conversations found.'
+                                        : 'No conversations yet.'}
+                                </p>
+                            )}
+                        </div>
+
                         {/* Search Input Bar — slides in when search is active */}
-                        {searchOpen && (
-                            <div className="flex-shrink-0 border-b border-border px-4 py-2">
+                        {searchOpen && !isSidebarCollapsed && (
+                            <div className="flex-shrink-0 border-t border-border px-4 py-3">
                                 <input
                                     type="text"
                                     placeholder="Search by name..."
@@ -753,42 +792,46 @@ export default function Home({
                             </div>
                         )}
 
-                        {/* Conversation List 
-                            - it display each convo on the left sidebar by the map().
-                            - if user click each convo it will display the messaes of the convo by running selectConversation
-                        */}
-                        <div className="flex-1 scrollbar-thin space-y-0.5 overflow-y-auto py-2">
-                            {filteredConversations.length > 0 ? (
-                                filteredConversations.map((convo) => (
-                                    <div
-                                        key={convo.id}
+                        {/* Bottom Actions */}
+                        <div
+                            className={`flex flex-shrink-0 items-center border-t border-border px-4 py-3 ${isSidebarCollapsed ? 'justify-center' : 'justify-around'}`}
+                        >
+                            <button
+                                onClick={() => {
+                                    setSearchOpen(!searchOpen);
+
+                                    if (searchOpen) {
+                                        setSearchQuery('');
+                                    }
+                                }}
+                                aria-label="Search conversations"
+                                className={`flex h-8 w-8 items-center justify-center rounded-full transition-all ${
+                                    searchOpen
+                                        ? 'bg-accent/10 text-accent dark:bg-accent-alt/10 dark:text-accent-alt'
+                                        : 'text-muted-foreground hover:bg-muted hover:text-foreground dark:hover:bg-muted/40'
+                                }`}
+                            >
+                                <Search className="h-5 w-5" />
+                            </button>
+
+                            {!isSidebarCollapsed && (
+                                <>
+                                    <button
                                         onClick={() =>
-                                            selectConversation(convo)
+                                            setIsNewChatModalOpen(true)
                                         }
+                                        aria-label="New chat"
+                                        className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-all hover:bg-muted hover:text-foreground dark:hover:bg-muted/40"
                                     >
-                                        <ConversationItem
-                                            convo={{
-                                                ...convo,
-                                                online:
-                                                    convo.otherUserId !==
-                                                        null &&
-                                                    onlineUserIds.has(
-                                                        convo.otherUserId,
-                                                    ),
-                                            }}
-                                            active={
-                                                activeConvo !== null &&
-                                                convo.id === activeConvo.id
-                                            }
-                                        />
-                                    </div>
-                                ))
-                            ) : (
-                                <p className="py-8 text-center font-sans text-sm text-muted-foreground">
-                                    {searchOpen
-                                        ? 'No conversations found.'
-                                        : 'No conversations yet.'}
-                                </p>
+                                        <Edit className="h-5 w-5" />
+                                    </button>
+                                    <button
+                                        aria-label="More options"
+                                        className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-all hover:bg-muted hover:text-foreground dark:hover:bg-muted/40"
+                                    >
+                                        <MoreHorizontal className="h-5 w-5" />
+                                    </button>
+                                </>
                             )}
                         </div>
                     </aside>
