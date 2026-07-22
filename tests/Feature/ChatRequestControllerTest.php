@@ -1,20 +1,21 @@
 <?php
 
-use App\Models\User;
 use App\Models\ChatRequest;
 use App\Models\Conversation;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 uses(RefreshDatabase::class);
 
 test('user can send a chat request to another user', function () {
-    /** @var \App\Models\User $sender */
+    /** @var User $sender */
     $sender = User::factory()->create();
 
-    /** @var \App\Models\User $receiver */
+    /** @var User $receiver */
     $receiver = User::factory()->create();
 
-    /** @var \Tests\TestCase $this */
+    /** @var TestCase $this */
     $response = $this->actingAs($sender)->postJson(route('chat-requests.store'), [
         'receiver_id' => $receiver->id,
     ]);
@@ -30,10 +31,10 @@ test('user can send a chat request to another user', function () {
 });
 
 test('accepting a chat request creates a conversation with both users', function () {
-    /** @var \App\Models\User $sender */
+    /** @var User $sender */
     $sender = User::factory()->create();
 
-    /** @var \App\Models\User $receiver */
+    /** @var User $receiver */
     $receiver = User::factory()->create();
 
     // create a pending chat request in the database
@@ -44,7 +45,7 @@ test('accepting a chat request creates a conversation with both users', function
     ]);
 
     // the RECEIVER accepts the request
-    /** @var \Tests\TestCase $this */
+    /** @var TestCase $this */
     $response = $this->actingAs($receiver)->patchJson(
         route('chat-requests.accept', $chatRequest)
     );
@@ -65,10 +66,10 @@ test('accepting a chat request creates a conversation with both users', function
 });
 
 test('rejecting a chat request does not create a conversation', function () {
-    /** @var \App\Models\User $sender */
+    /** @var User $sender */
     $sender = User::factory()->create();
 
-    /** @var \App\Models\User $receiver */
+    /** @var User $receiver */
     $receiver = User::factory()->create();
 
     // create a pending chat request
@@ -79,7 +80,7 @@ test('rejecting a chat request does not create a conversation', function () {
     ]);
 
     // the RECEIVER rejects the request
-    /** @var \Tests\TestCase $this */
+    /** @var TestCase $this */
     $response = $this->actingAs($receiver)->patchJson(
         route('chat-requests.reject', $chatRequest)
     );
@@ -97,10 +98,10 @@ test('rejecting a chat request does not create a conversation', function () {
 });
 
 test('user cannot send a duplicate chat request', function () {
-    /** @var \App\Models\User $sender */
+    /** @var User $sender */
     $sender = User::factory()->create();
 
-    /** @var \App\Models\User $receiver */
+    /** @var User $receiver */
     $receiver = User::factory()->create();
 
     // create the first request (this should work)
@@ -111,7 +112,7 @@ test('user cannot send a duplicate chat request', function () {
     ]);
 
     // try to send a SECOND request to the same person (this should fail)
-    /** @var \Tests\TestCase $this */
+    /** @var TestCase $this */
     $response = $this->actingAs($sender)->postJson(route('chat-requests.store'), [
         'receiver_id' => $receiver->id,
     ]);
@@ -123,11 +124,11 @@ test('user cannot send a duplicate chat request', function () {
 });
 
 test('user cannot send a chat request to themselves', function () {
-    /** @var \App\Models\User $user */
+    /** @var User $user */
     $user = User::factory()->create();
 
     // try to send a request to yourself
-    /** @var \Tests\TestCase $this */
+    /** @var TestCase $this */
     $response = $this->actingAs($user)->postJson(route('chat-requests.store'), [
         'receiver_id' => $user->id,
     ]);

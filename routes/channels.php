@@ -14,16 +14,16 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
  * AUTHORIZE THE CONVERSATION PRIVATE CHANNEL
  * - only allow a user to listen if they are a participant
  * of this conversation
-*/
+ */
 Broadcast::channel('conversation.{conversationId}', function ($user,
-$conversationId){
+    $conversationId) {
 
     // find the conversation in db
-    /** @var \App\Models\Conversation|null $conversation */
+    /** @var Conversation|null $conversation */
     $conversation = Conversation::query()->find($conversationId);
 
     // if conversation doesnt exist, deny access
-    if (! $conversation){
+    if (! $conversation) {
         return false;
     }
 
@@ -36,8 +36,8 @@ $conversationId){
  * === AUTHORIZE THE PRESENCE CHANNEL FOR ONLINE STATUS
  * - every authernticated user can join this channel
  * - returned array is the id card that other users see
-*/
-Broadcast::channel('chat', function ($user){
+ */
+Broadcast::channel('chat', function ($user) {
     // return the user's data
     return [
         'id' => $user->id,

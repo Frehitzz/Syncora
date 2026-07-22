@@ -4,6 +4,7 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 uses(RefreshDatabase::class);
 
@@ -13,10 +14,10 @@ uses(RefreshDatabase::class);
 // wired to a controller, event, or model that saves to the database.
 test('typing events do NOT create any records in the messages table', function () {
     // 1. ARRANGE: create two users and a conversation between them
-    /** @var \App\Models\User $alice */
+    /** @var User $alice */
     $alice = User::factory()->create(['name' => 'Alice']);
 
-    /** @var \App\Models\User $bob */
+    /** @var User $bob */
     $bob = User::factory()->create(['name' => 'Bob']);
 
     $conversation = Conversation::create();
@@ -29,7 +30,7 @@ test('typing events do NOT create any records in the messages table', function (
     // 3. ACT: simulate what would happen if someone mistakenly created
     //    a "typing" API endpoint — we verify no such route exists
     //    by checking that common typing-related routes return 404/405
-    /** @var \Tests\TestCase $this */
+    /** @var TestCase $this */
 
     // Try POST /conversations/{id}/typing — should NOT exist
     $response = $this->actingAs($alice)->postJson(
@@ -52,14 +53,14 @@ test('typing events do NOT create any records in the messages table', function (
 // a route to handle typing events server-side, this test will fail
 // and remind them that typing should stay client-side only.
 test('no server-side typing route exists for conversations', function () {
-    /** @var \App\Models\User $user */
+    /** @var User $user */
     $user = User::factory()->create();
 
-    /** @var \App\Models\Conversation $conversation */
+    /** @var Conversation $conversation */
     $conversation = Conversation::create();
     $conversation->users()->attach([$user->id]);
 
-    /** @var \Tests\TestCase $this */
+    /** @var TestCase $this */
 
     // Try all common HTTP methods on a hypothetical typing endpoint
     $postResponse = $this->actingAs($user)->postJson("/conversations/{$conversation->id}/typing");
@@ -79,17 +80,17 @@ test('no server-side typing route exists for conversations', function () {
 // pretending to be "typing" events, the database should remain untouched.
 test('database remains clean after simulated typing activity', function () {
     // 1. ARRANGE
-    /** @var \App\Models\User $user */
+    /** @var User $user */
     $user = User::factory()->create();
 
-    /** @var \App\Models\User $otherUser */
+    /** @var User $otherUser */
     $otherUser = User::factory()->create();
 
     $conversation = Conversation::create();
     $conversation->users()->attach([$user->id, $otherUser->id]);
 
     // 2. ACT: send a real message (this SHOULD create a record)
-    /** @var \Tests\TestCase $this */
+    /** @var TestCase $this */
     $this->actingAs($user)->postJson(
         route('conversations.messages.store', $conversation),
         ['body' => 'Hello Bob!']

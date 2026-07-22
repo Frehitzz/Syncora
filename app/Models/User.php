@@ -3,12 +3,12 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -54,7 +54,7 @@ class User extends Authenticatable implements PasskeyUser
     /**
      * Get all messages sent by this user
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Message, $this>
+     * @return HasMany<Message, $this>
      */
     public function sentMessage(): HasMany
     {
@@ -65,7 +65,7 @@ class User extends Authenticatable implements PasskeyUser
     /**
      * Get all messages received by this user
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Message, $this>
+     * @return HasMany<Message, $this>
      */
     public function receiveMessage(): HasMany
     {
@@ -76,7 +76,7 @@ class User extends Authenticatable implements PasskeyUser
     /**
      * Get all the conversations this user is a part of
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<Conversation, $this>
+     * @return BelongsToMany<Conversation, $this>
      */
     public function conversations(): BelongsToMany
     {
@@ -86,25 +86,26 @@ class User extends Authenticatable implements PasskeyUser
     // ========== receivedChatRequests =========
     /**
      * Get all chat requests that were sent TO this user
-     * 
+     *
      * THIS IS USE TO COUNT THE USER PENDING REQUEST THAT WILL DISPLAY ON BELL ICON
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<ChatRequest, $this>
+     * @return HasMany<ChatRequest, $this>
      */
-
-    public function receivedChatRequests(): HasMany{
+    public function receivedChatRequests(): HasMany
+    {
         return $this->hasMany(ChatRequest::class, 'receiver_id');
     }
 
     // ========== sentChatRequests ===========
     /**
      * Get all chat requests that were sent BY this user
-     * 
+     *
      * THIS IS USE TO PREVENT DUPLICATES
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<ChatRequest, $this>
+     * @return HasMany<ChatRequest, $this>
      */
-    public function snetChatRequests(): HasMany{
+    public function snetChatRequests(): HasMany
+    {
         return $this->hasMany(ChatRequest::class, 'sender_id');
     }
 }

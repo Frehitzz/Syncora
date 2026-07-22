@@ -1,7 +1,5 @@
 <?php
 
-use Illuminate\Support\Facades\Broadcast;
-
 // Test that the broadcasting system is configured with Reverb
 test('broadcasting is configured with reverb', function () {
     // Check that the reverb configuration block exists in broadcasting.php

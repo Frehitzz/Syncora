@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Model;
 
 class Conversation extends Model
 {
@@ -12,7 +12,7 @@ class Conversation extends Model
     /**
      * Get the users that are part of this conversation
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<User, $this>
+     * @return BelongsToMany<User, $this>
      */
     public function users(): BelongsToMany
     {
@@ -23,7 +23,7 @@ class Conversation extends Model
     /**
      * Get all messages sent within this conversation
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Message, $this>
+     * @return HasMany<Message, $this>
      */
     public function messages(): HasMany
     {

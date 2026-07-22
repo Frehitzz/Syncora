@@ -4,15 +4,16 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 uses(RefreshDatabase::class);
 
-test('logged in user can view messages for their conversation', function (){
+test('logged in user can view messages for their conversation', function () {
     // 1. ARRANGE: create 2 users, a conversation and a message
-    /** @var \App\Models\User $user */
+    /** @var User $user */
     $user = User::factory()->create();
-    
-    /** @var \App\Models\User $otherUser */
+
+    /** @var User $otherUser */
     $otherUser = User::factory()->create();
 
     $conversation = Conversation::create();
@@ -27,7 +28,7 @@ test('logged in user can view messages for their conversation', function (){
     ]);
 
     // 2. ACT: request the messages for this conversation
-   /** @var \Tests\TestCase $this */
+    /** @var TestCase $this */
     $response = $this->actingAs($user)->getJson(
         route('conversations.messages', $conversation)
     );
@@ -42,22 +43,22 @@ test('logged in user can view messages for their conversation', function (){
     ]);
 });
 
-test('user cannot view mesages for a conversation they do not belong to', function (){
+test('user cannot view mesages for a conversation they do not belong to', function () {
 
     // 1. ARRANGE: create a conversation that the user is not part of
-    /** @var \App\Models\User $user */
+    /** @var User $user */
     $user = User::factory()->create();
-    
-    /** @var \App\Models\User $stranger1 */
+
+    /** @var User $stranger1 */
     $stranger1 = User::factory()->create();
-    
-    /** @var \App\Models\User $stranger2 */
+
+    /** @var User $stranger2 */
     $stranger2 = User::factory()->create();
 
     $conversation = Conversation::create();
-    $conversation->users()->attach([$stranger1->id,$stranger2->id]);
+    $conversation->users()->attach([$stranger1->id, $stranger2->id]);
 
-    /** @var \Tests\TestCase $this */
+    /** @var TestCase $this */
     $response = $this->actingAs($user)->getJson(
         route('conversations.messages', $conversation)
     );
@@ -67,17 +68,17 @@ test('user cannot view mesages for a conversation they do not belong to', functi
 
 test('logged in user can send a message to their conversation', function () {
     // 1. ARRANGE: create 2 users and a conversation
-    /** @var \App\Models\User $user */
+    /** @var User $user */
     $user = User::factory()->create();
 
-    /** @var \App\Models\User $otherUser */
+    /** @var User $otherUser */
     $otherUser = User::factory()->create();
 
     $conversation = Conversation::create();
     $conversation->users()->attach([$user->id, $otherUser->id]);
 
     // 2. ACT: send a POST request with a message body
-    /** @var \Tests\TestCase $this */
+    /** @var TestCase $this */
     $response = $this->actingAs($user)->postJson(
         route('conversations.messages.store', $conversation),
         ['body' => 'Hello from the test!']
@@ -92,28 +93,28 @@ test('logged in user can send a message to their conversation', function () {
 
     $this->assertDatabaseHas('messages', [
         'conversation_id' => $conversation->id,
-        'sender_id'       => $user->id,
-        'receiver_id'     => $otherUser->id,
-        'body'            => 'Hello from the test!',
+        'sender_id' => $user->id,
+        'receiver_id' => $otherUser->id,
+        'body' => 'Hello from the test!',
     ]);
 });
 
 test('user cannot send a message to a conversation they do not belong to', function () {
     // 1. ARRANGE: create a conversation that the user is NOT part of
-    /** @var \App\Models\User $user */
+    /** @var User $user */
     $user = User::factory()->create();
 
-    /** @var \App\Models\User $stranger1 */
+    /** @var User $stranger1 */
     $stranger1 = User::factory()->create();
 
-    /** @var \App\Models\User $stranger2 */
+    /** @var User $stranger2 */
     $stranger2 = User::factory()->create();
 
     $conversation = Conversation::create();
     $conversation->users()->attach([$stranger1->id, $stranger2->id]);
 
     // 2. ACT: try to send a message as the outsider
-    /** @var \Tests\TestCase $this */
+    /** @var TestCase $this */
     $response = $this->actingAs($user)->postJson(
         route('conversations.messages.store', $conversation),
         ['body' => 'I should not be able to send this!']
@@ -130,17 +131,17 @@ test('user cannot send a message to a conversation they do not belong to', funct
 
 test('user cannot send an empty message', function () {
     // 1. ARRANGE
-    /** @var \App\Models\User $user */
+    /** @var User $user */
     $user = User::factory()->create();
 
-    /** @var \App\Models\User $otherUser */
+    /** @var User $otherUser */
     $otherUser = User::factory()->create();
 
     $conversation = Conversation::create();
     $conversation->users()->attach([$user->id, $otherUser->id]);
 
     // 2. ACT: send a POST request with an empty body
-    /** @var \Tests\TestCase $this */
+    /** @var TestCase $this */
     $response = $this->actingAs($user)->postJson(
         route('conversations.messages.store', $conversation),
         ['body' => '']

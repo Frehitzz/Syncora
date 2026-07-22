@@ -22,8 +22,6 @@ export default function Login({ status, canResetPassword }: Props) {
         <>
             <Head title="Log in" />
 
-
-
             <Form
                 {...store.form()}
                 resetOnSuccess={['password']}
@@ -33,7 +31,12 @@ export default function Login({ status, canResetPassword }: Props) {
                     <>
                         <div className="grid gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="email" className="font-sans text-foreground/80">Email address</Label>
+                                <Label
+                                    htmlFor="email"
+                                    className="font-sans text-foreground/80"
+                                >
+                                    Email address
+                                </Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -43,18 +46,23 @@ export default function Login({ status, canResetPassword }: Props) {
                                     tabIndex={1}
                                     autoComplete="email"
                                     placeholder="email@example.com"
-                                    className="bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/80 dark:border-white/20 shadow-[0_4px_16px_rgba(0,0,0,0.05)] transition-all hover:bg-white/80 dark:hover:bg-white/20 focus-visible:bg-white/90 dark:focus-visible:bg-white/30"
+                                    className="border border-white/80 bg-white/60 shadow-[0_4px_16px_rgba(0,0,0,0.05)] backdrop-blur-md transition-all hover:bg-white/80 focus-visible:bg-white/90 dark:border-white/20 dark:bg-white/10 dark:hover:bg-white/20 dark:focus-visible:bg-white/30"
                                 />
                                 <InputError message={errors.email} />
                             </div>
 
                             <div className="grid gap-2">
                                 <div className="flex items-center">
-                                    <Label htmlFor="password" className="font-sans text-foreground/80">Password</Label>
+                                    <Label
+                                        htmlFor="password"
+                                        className="font-sans text-foreground/80"
+                                    >
+                                        Password
+                                    </Label>
                                     {canResetPassword && (
                                         <TextLink
                                             href={request()}
-                                            className="ml-auto text-sm text-primary hover:text-accent-alt transition-colors"
+                                            className="ml-auto text-sm text-primary transition-colors hover:text-accent-alt"
                                             tabIndex={5}
                                         >
                                             Forgot your password?
@@ -68,7 +76,7 @@ export default function Login({ status, canResetPassword }: Props) {
                                     tabIndex={2}
                                     autoComplete="current-password"
                                     placeholder="Password"
-                                    className="bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/80 dark:border-white/20 shadow-[0_4px_16px_rgba(0,0,0,0.05)] transition-all hover:bg-white/80 dark:hover:bg-white/20 focus-visible:bg-white/90 dark:focus-visible:bg-white/30"
+                                    className="border border-white/80 bg-white/60 shadow-[0_4px_16px_rgba(0,0,0,0.05)] backdrop-blur-md transition-all hover:bg-white/80 focus-visible:bg-white/90 dark:border-white/20 dark:bg-white/10 dark:hover:bg-white/20 dark:focus-visible:bg-white/30"
                                 />
                                 <InputError message={errors.password} />
                             </div>
@@ -79,12 +87,17 @@ export default function Login({ status, canResetPassword }: Props) {
                                     name="remember"
                                     tabIndex={3}
                                 />
-                                <Label htmlFor="remember" className="font-sans text-foreground/80">Remember me</Label>
+                                <Label
+                                    htmlFor="remember"
+                                    className="font-sans text-foreground/80"
+                                >
+                                    Remember me
+                                </Label>
                             </div>
 
                             <Button
                                 type="submit"
-                                className="mt-4 w-full bg-accent-alt text-accent-foreground font-sans font-semibold tracking-wide hover:opacity-90 transition-opacity"
+                                className="mt-4 w-full bg-accent-alt font-sans font-semibold tracking-wide text-accent-foreground transition-opacity hover:opacity-90"
                                 tabIndex={4}
                                 disabled={processing}
                                 data-test="login-button"
@@ -94,9 +107,13 @@ export default function Login({ status, canResetPassword }: Props) {
                             </Button>
                         </div>
 
-                        <div className="text-center text-sm text-muted-foreground font-sans">
+                        <div className="text-center font-sans text-sm text-muted-foreground">
                             Don't have an account?{' '}
-                            <TextLink href={register()} className="text-primary hover:text-accent-alt transition-colors font-medium" tabIndex={5}>
+                            <TextLink
+                                href={register()}
+                                className="font-medium text-primary transition-colors hover:text-accent-alt"
+                                tabIndex={5}
+                            >
                                 Sign up
                             </TextLink>
                         </div>

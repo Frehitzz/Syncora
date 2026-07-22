@@ -5,6 +5,7 @@ use App\Models\Conversation;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Tests\TestCase;
 
 uses(RefreshDatabase::class);
 
@@ -16,17 +17,17 @@ test('MessageSent event is dispatched when a user sends a message', function () 
     Event::fake();
 
     // 2. ARRANGE: set up two users and a conversation
-    /** @var \App\Models\User $user */
+    /** @var User $user */
     $user = User::factory()->create();
 
-    /** @var \App\Models\User $otherUser */
+    /** @var User $otherUser */
     $otherUser = User::factory()->create();
 
     $conversation = Conversation::create();
     $conversation->users()->attach([$user->id, $otherUser->id]);
 
     // 3. ACT: send a message via the API (same as a real user clicking Send)
-    /** @var \Tests\TestCase $this */
+    /** @var TestCase $this */
     $response = $this->actingAs($user)->postJson(
         route('conversations.messages.store', $conversation),
         ['body' => 'Hello in real-time!']
@@ -50,20 +51,20 @@ test('MessageSent event is NOT dispatched if user does not belong to the convers
     Event::fake();
 
     // 2. ARRANGE: user is NOT part of this conversation
-    /** @var \App\Models\User $outsider */
+    /** @var User $outsider */
     $outsider = User::factory()->create();
 
-    /** @var \App\Models\User $member1 */
+    /** @var User $member1 */
     $member1 = User::factory()->create();
 
-    /** @var \App\Models\User $member2 */
+    /** @var User $member2 */
     $member2 = User::factory()->create();
 
     $conversation = Conversation::create();
     $conversation->users()->attach([$member1->id, $member2->id]);
 
     // 3. ACT: try to send a message as the outsider
-    /** @var \Tests\TestCase $this */
+    /** @var TestCase $this */
     $response = $this->actingAs($outsider)->postJson(
         route('conversations.messages.store', $conversation),
         ['body' => 'I am not allowed here!']

@@ -14,21 +14,21 @@ class ChatRequest extends Model
     /**
      * Get the user who sent this chat request
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<User, $this>
+     * @return BelongsTo<User, $this>
      */
-
-    public function sender():BelongsTo{
-        return $this->belongsTo(User::class,'sender_id');
+    public function sender(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'sender_id');
     }
 
     // ====== RECEIVER ======
     /**
      * Get the user who received this chat request
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<User, $this>
+     * @return BelongsTo<User, $this>
      */
-
-    public function receiver():BelongsTo{
+    public function receiver(): BelongsTo
+    {
         return $this->belongsTo(User::class, 'receiver_id');
     }
 }

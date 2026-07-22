@@ -4,13 +4,14 @@ use App\Models\Conversation;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
+use Tests\TestCase;
 
 uses(RefreshDatabase::class);
 
 // ======= VERIFY AUTHENTICATED USERS CAN JOIN THE PRESENCE CHANNEL ==========
 test('authenticated user can join the presence channel and receives correct data', function () {
     // 1. ARRANGE: create a user
-    /** @var \App\Models\User $user */
+    /** @var User $user */
     $user = User::factory()->create(['name' => 'Alice']);
 
     // We need to set the broadcast driver to something that actually performs auth
@@ -21,7 +22,7 @@ test('authenticated user can join the presence channel and receives correct data
     // 2. ACT: simulate an auth request for the presence channel
     //    Laravel's broadcast auth endpoint is POST /broadcasting/auth
     //    We send the channel name as "presence-chat" because that's what Echo sends
-    /** @var \Tests\TestCase $this */
+    /** @var TestCase $this */
     $response = $this->actingAs($user)->postJson('/broadcasting/auth', [
         'channel_name' => 'presence-chat',
         'socket_id' => '1234.5678',
@@ -45,7 +46,7 @@ test('unauthenticated user cannot join the presence channel', function () {
     require base_path('routes/channels.php');
 
     // 1. ACT: try to auth without being logged in
-    /** @var \Tests\TestCase $this */
+    /** @var TestCase $this */
     $response = $this->postJson('/broadcasting/auth', [
         'channel_name' => 'presence-chat',
         'socket_id' => '1234.5678',
@@ -58,17 +59,17 @@ test('unauthenticated user cannot join the presence channel', function () {
 // ======= VERIFY CONVERSATION DATA INCLUDES OTHER USER ID ==========
 test('conversation data includes otherUserId for the frontend', function () {
     // 1. ARRANGE: create two users and a conversation between them
-    /** @var \App\Models\User $user */
+    /** @var User $user */
     $user = User::factory()->create();
 
-    /** @var \App\Models\User $otherUser */
+    /** @var User $otherUser */
     $otherUser = User::factory()->create();
 
     $conversation = Conversation::create();
     $conversation->users()->attach([$user->id, $otherUser->id]);
 
     // 2. ACT: visit the dashboard (which loads conversations via Inertia)
-    /** @var \Tests\TestCase $this */
+    /** @var TestCase $this */
     $response = $this->actingAs($user)->get(route('dashboard'));
 
     // 3. ASSERT: the response contains the conversation data with otherUserId

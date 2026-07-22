@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Message extends Model
 {
@@ -19,7 +19,7 @@ class Message extends Model
     /**
      * Get the conversation that this message belongs to
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Conversation, $this>
+     * @return BelongsTo<Conversation, $this>
      */
     public function conversation(): BelongsTo
     {
@@ -30,7 +30,7 @@ class Message extends Model
     /**
      * Get the user who sent the message
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<User, $this>
+     * @return BelongsTo<User, $this>
      */
     public function sender(): BelongsTo
     {
@@ -41,7 +41,7 @@ class Message extends Model
     /**
      * Get the user who receives the message
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<User, $this>
+     * @return BelongsTo<User, $this>
      */
     public function receiver(): BelongsTo
     {

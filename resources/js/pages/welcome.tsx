@@ -18,19 +18,31 @@ export default function Welcome() {
                 {/* Header */}
                 <header className="flex w-full items-center justify-between p-6 lg:px-12">
                     <div className="flex flex-1 justify-start">
-                        <Link href="/" className="font-heading text-5xl text-accent dark:text-accent-alt">
+                        <Link
+                            href="/"
+                            className="font-heading text-5xl text-accent dark:text-accent-alt"
+                        >
                             SC
                         </Link>
                     </div>
 
-                    <nav className="hidden md:flex items-center justify-center gap-10 text-sm font-medium tracking-wide">
-                        <Link href="/" className="transition-colors hover:text-accent">
+                    <nav className="hidden items-center justify-center gap-10 text-sm font-medium tracking-wide md:flex">
+                        <Link
+                            href="/"
+                            className="transition-colors hover:text-accent"
+                        >
                             Home
                         </Link>
-                        <Link href="#" className="transition-colors hover:text-accent">
+                        <Link
+                            href="#"
+                            className="transition-colors hover:text-accent"
+                        >
                             About
                         </Link>
-                        <Link href="#" className="transition-colors hover:text-accent">
+                        <Link
+                            href="#"
+                            className="transition-colors hover:text-accent"
+                        >
                             Contact
                         </Link>
                     </nav>
@@ -68,16 +80,19 @@ export default function Welcome() {
 
                     {/* Text Container */}
                     <div className="relative z-10 flex max-w-5xl flex-col items-center justify-center">
-                        <p className="mb-2 text-xl font-medium tracking-wide md:text-5xl text-secondary-foreground">
+                        <p className="mb-2 text-xl font-medium tracking-wide text-secondary-foreground md:text-5xl">
                             Conversations That Happen in Real Time
                         </p>
 
-                        <h1 className="mb-6 font-heading font-bold text-[6rem] leading-none text-accent drop-shadow-2xl dark:text-accent-alt md:text-[9rem]">
+                        <h1 className="mb-6 font-heading text-[6rem] leading-none font-bold text-accent drop-shadow-2xl md:text-[9rem] dark:text-accent-alt">
                             Syncora
                         </h1>
 
                         <p className="max-w-2xl text-base leading-relaxed text-foreground md:text-lg">
-                            Whether you're chatting with friends, collaborating with a team, or sharing ideas, enjoy a messaging experience that feels natural, responsive, and always in sync.
+                            Whether you're chatting with friends, collaborating
+                            with a team, or sharing ideas, enjoy a messaging
+                            experience that feels natural, responsive, and
+                            always in sync.
                         </p>
 
                         <div className="mt-10 flex items-center justify-center gap-4 text-base font-medium">
@@ -92,7 +107,7 @@ export default function Welcome() {
                                 <>
                                     <Link
                                         href={login()}
-                                        className="rounded-md border border-white/20 bg-background/30 px-8 py-3.5 backdrop-blur-md shadow-sm transition-colors hover:bg-background/50 dark:border-white/10 dark:bg-background/20 dark:hover:bg-background/30"
+                                        className="rounded-md border border-white/20 bg-background/30 px-8 py-3.5 shadow-sm backdrop-blur-md transition-colors hover:bg-background/50 dark:border-white/10 dark:bg-background/20 dark:hover:bg-background/30"
                                     >
                                         Log in
                                     </Link>
