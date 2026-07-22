@@ -312,11 +312,11 @@ Verify that when a user authenticates on the presence channel, the correct user 
 
 ### Feature 3.4 — "Typing..." Indicator
 
-- [ ] Detect when a user is typing in the input box
-- [ ] Broadcast a whisper event (client-side only, no server save)
-- [ ] Show "typing..." text below the user's name in the chat header
-- [ ] Hide the indicator after 2 seconds of no typing
-- [ ] Write a test to confirm typing events are NOT saved to the database
+- [ x ] Detect when a user is typing in the input box
+- [ x ] Broadcast a whisper event (client-side only, no server save)
+- [ x ] Show "typing..." text below the user's name in the chat header
+- [ x ] Hide the indicator after 2 seconds of no typing
+- [ x ] Write a test to confirm typing events are NOT saved to the database
 
 **What is this?**
 When Alice is typing a message to you, you should see "Alice is typing..." appear in the chat window. This is a real-time feature powered by WebSockets.

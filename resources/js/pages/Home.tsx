@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { Moon, Sun, Search, MoreHorizontal, Info, Phone, Video, Bell, Edit } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useAppearance } from '@/hooks/use-appearance';
@@ -125,6 +125,10 @@ interface ChatRequestData {
 export default function Home({ conversations = [] }: { conversations?: Conversation[] }) {
     const { resolvedAppearance, updateAppearance } = useAppearance();
 
+    // ====== CURRENT USER DATA =====
+    // get authenticated users data from inertia shared page props
+    const { auth } = usePage().props;
+
     const toggleTheme = () => {
         updateAppearance(resolvedAppearance === 'dark' ? 'light' : 'dark');
     };
@@ -155,6 +159,11 @@ export default function Home({ conversations = [] }: { conversations?: Conversat
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
+    // ======== TYPING INDICATOR TIMER =======
+    // holds the setTimeout Id so we can clear it when a new keystroke arrives
+    // userRef (not useState) because changing a timer ID should NOT cause a re-render
+    const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
     // Trigger auto-scroll whenever chat messages change
     useEffect(() => {
         scrollToBottom();
@@ -174,6 +183,11 @@ export default function Home({ conversations = [] }: { conversations?: Conversat
     // Tracks which user IDs are currently online via presence channel
     // This is a Set because we only need to check "is this user online?" (fast lookups)
     const [onlineUserIds, setOnlineUserIds] = useState<Set<number>>(new Set());
+
+    // ======== TYPING INDICATOR STATE ========
+    // tracks the name of the user who is currently typing in the active conversation
+    // null means nobody is typing (hide the indicator)
+    const [typingUser, setTypingUser] = useState<string | null>(null);
 
     // every time you type it automatically display the users realtime
     useEffect(() => {
@@ -367,15 +381,15 @@ export default function Home({ conversations = [] }: { conversations?: Conversat
     useEffect(() => {
         // Don't set up a listener if there's no active conversation
         if (!activeConvo) {
-return;
-}
+            return;
+        }
 
         // Subscribe to the private channel for this conversation
         // "private" means the user must be authorized (checked in channels.php)
         window.Echo.private(`conversation.${activeConvo.id}`)
             .listen('MessageSent', (data: Message) => {
                 // "data" contains everything we returned in broadcastWith()
-                
+
                 setChatMessages((prev) => {
                     // PREVENT DUPLICATES: React StrictMode (during development) 
                     // sometimes registers the WebSocket listener twice. 
@@ -383,12 +397,27 @@ return;
                     const isDuplicate = prev.some((msg) => msg.id === data.id);
 
                     if (isDuplicate) {
-return prev;
-}
+                        return prev;
+                    }
 
                     // Add the incoming message to the end of the chat list
                     return [...prev, data];
                 });
+            })
+            // ==== LISTEN FOR TYPING WHISPER EVENT =====
+            .listenForWhisper('typing', (data: { name: string }) => {
+
+                // show typing indicator with the sender's name
+                setTypingUser(data.name);
+
+                // clear any existing timer - this is the reset button
+                if (typingTimeoutRef.current) {
+                    clearTimeout(typingTimeoutRef.current);
+                }
+
+                typingTimeoutRef.current = setTimeout(() => {
+                    setTypingUser(null); // hide the indicator
+                }, 2000);
             });
 
         // CLEANUP FUNCTION:
@@ -396,6 +425,12 @@ return prev;
         // React will run this cleanup function FIRST to unsubscribe from the old channel.
         return () => {
             window.Echo.leave(`conversation.${activeConvo.id}`);
+            
+            // Also clear any pending typing timer to prevent state updates on unmounted components
+            if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current);
+            }
+            setTypingUser(null); // reset typing indicator when switching conversations
         };
     }, [activeConvo]); // Re-run this effect every time activeConvo changes
 
@@ -659,15 +694,21 @@ return prev;
                                     />
                                     <div>
                                         <p className="text-sm font-bold font-sans text-foreground">{activeConvo.name}</p>
-                                        <p className={`text-xs font-sans ${
-                                            activeConvo.otherUserId !== null && onlineUserIds.has(activeConvo.otherUserId)
+                                        {/* ── Typing indicator OR online status ── */}
+                                        {typingUser ? (  /* ← ADD: show typing indicator if someone is typing */
+                                            <p className="text-xs font-sans text-accent dark:text-accent-alt animate-pulse">
+                                                {typingUser} is typing...
+                                            </p>
+                                        ) : (
+                                            <p className={`text-xs font-sans ${activeConvo.otherUserId !== null && onlineUserIds.has(activeConvo.otherUserId)
                                                 ? 'text-green-500'
                                                 : 'text-muted-foreground'
-                                        }`}>
-                                            {activeConvo.otherUserId !== null && onlineUserIds.has(activeConvo.otherUserId)
-                                                ? 'Active now'
-                                                : 'Offline'}
-                                        </p>
+                                                }`}>
+                                                {activeConvo.otherUserId !== null && onlineUserIds.has(activeConvo.otherUserId)
+                                                    ? 'Active now'
+                                                    : 'Offline'}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             ) : (
@@ -717,7 +758,7 @@ return prev;
                                     ) : (
                                         <p className="text-center text-sm text-muted-foreground font-sans py-8">No messages yet. Say hello! 👋</p>
                                     )}
-                                    
+
                                     {/* Invisible div to scroll to */}
                                     <div ref={messagesEndRef} />
                                 </>
@@ -738,9 +779,22 @@ return prev;
                                         value={newMessage}
                                         onChange={(e) => setNewMessage(e.target.value)}
                                         onKeyDown={(e) => {
+                                            // ── Send the message when Enter is pressed ──
                                             if (e.key === 'Enter' && !e.shiftKey) {
                                                 e.preventDefault();
                                                 sendMessage();
+                                                return; // ← ADD: stop here so we don't send a whisper for the Enter key
+                                            }
+
+                                            // ── Broadcast a "typing" whisper to the other user ──
+                                            // This only fires for non-Enter keys (actual typing)
+                                            // The whisper travels: our browser → Reverb → other user's browser
+                                            // It NEVER touches the Laravel backend or database
+                                            if (activeConvo) {
+                                                window.Echo.private(`conversation.${activeConvo.id}`)
+                                                    .whisper('typing', {
+                                                        name: auth.user?.name ?? 'Someone', // who is typing
+                                                    });
                                             }
                                         }}
                                         className="flex-1 bg-transparent text-sm font-sans text-foreground placeholder:text-muted-foreground outline-none"
@@ -768,11 +822,11 @@ return prev;
             {isNewChatModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
                     <div className="bg-background border border-border w-full max-w-md rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[80vh]">
-                        
+
                         {/* Modal Header */}
                         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
                             <h3 className="font-bold font-sans text-foreground">Start New Chat</h3>
-                            <button 
+                            <button
                                 onClick={() => {
                                     setIsNewChatModalOpen(false);
                                     setUserSearchQuery('');
