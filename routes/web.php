@@ -21,6 +21,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         [MessageController::class, 'store'])
         ->name('conversations.messages.store');
 
+    Route::post('conversations/{conversation}/mark-read',
+        [MessageController::class, 'markAsRead'])
+        ->name('conversations.mark-read');
+
     Route::get('users/search', [UserController::class, 'search'])->name('users.search');
 
     Route::post('conversations', [ConversationController::class, 'store'])->name('conversations.store');

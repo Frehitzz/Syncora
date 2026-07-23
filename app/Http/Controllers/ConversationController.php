@@ -29,11 +29,14 @@ class ConversationController extends Controller
         $conversations = $user->conversations()->with(['users', 'messages' => function ($query) {
             $query->latest()->limit(1);
         }])
+            ->withCount(['messages as unread_count' => function ($query) use ($user) {
+                $query->where('receiver_id', $user->id)->where('is_read', false);
+            }])
             ->get() // execute the sql
 
         // loop through the data we have (name, time avatar, etc)
         // we use map() to transform raw data into exact format react wants
-            ->map(function (Conversation $conversation) use ($user) {
+            ->map(function (Conversation $conversation) use ($user): array {
                 $otherUser = $conversation->users->firstWhere('id', '!=', $user->id);
 
                 // get the latest message
@@ -46,7 +49,7 @@ class ConversationController extends Controller
                     'lastMessage' => $lastMessage ? $lastMessage->body : '',
                     'time' => $lastMessage ? $lastMessage->created_at->diffForHumans(short: true) : '',
                     'avatar' => $otherUser ? strtoupper(substr($otherUser->name, 0, 2)) : 'SM',
-                    'unread' => 0, // placeholder for now
+                    'unread' => (int) $conversation->getAttribute('unread_count'),
                     'online' => false, // placeholder for now
                 ];
             });

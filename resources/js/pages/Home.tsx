@@ -219,6 +219,10 @@ export default function Home({
     // tracks whether messages are currently being loaded from the sesrver
     const [loadingMessages, setLoadingMessages] = useState(false);
 
+    // ======== LOCAL CONVERSATIONS STATE ==========
+    // mutable copy of conversations so we can update unread counts without page reload
+    const [localConversations, setLocalConversations] = useState(conversations);
+
     // tracks what the user is typing
     const [newMessage, setNewMessage] = useState('');
 
@@ -415,7 +419,7 @@ export default function Home({
     // .filter() - a method that create an array and loops every conversation and check "does this one match the search"
     // .toLowerCase - transform all charaacter to lowercase
     // .includes() - checks if one string contains another ex. searched "ali" display "alice"
-    const filteredConversations = conversations.filter((convo) =>
+    const filteredConversations = localConversations.filter((convo) =>
         convo.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
@@ -434,6 +438,33 @@ export default function Home({
             const data = await response.json();
             // takes that fresh translated data and saves it into react memory
             setChatMessages(data);
+
+            // ======== MARK MESSAGES AS READ ==========
+            // if this conversation has unread messages, tell the backend to mark them as read
+            if (convo.unread > 0) {
+                // get the CSRF token from the cookie (same pattern used elsewhere in this file)
+                const csrfToken =
+                    document.querySelector<HTMLMetaElement>(
+                        'meta[name="csrf-token"]',
+                    )?.content || '';
+
+                // fire-and-forget: we don't need to wait for the response
+                fetch(`/conversations/${convo.id}/mark-read`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                });
+
+                // immediately update the local unread count to 0 so the badge disappears
+                setLocalConversations((prev) =>
+                    prev.map((c) =>
+                        c.id === convo.id ? { ...c, unread: 0 } : c,
+                    ),
+                );
+            }
+            // ======== END MARK MESSAGES AS READ ==========
         } catch (error) {
             console.error('Failed to fetch messages:', error);
         } finally {
@@ -514,7 +545,40 @@ export default function Home({
                     // Add the incoming message to the end of the chat list
                     return [...prev, data];
                 });
+
+                // ======== UPDATE SIDEBAR PREVIEW ==========
+                // update the last message preview and bump unread count for this conversation
+                setLocalConversations((prev) =>
+                    prev.map((c) => {
+                        if (c.id === activeConvo.id) {
+                            return {
+                                ...c,
+                                lastMessage: data.content,
+                                time: data.time,
+                                // don't increment unread — the user is already looking at this conversation
+                            };
+                        }
+
+                        return c;
+                    }),
+                );
+                // ======== END UPDATE SIDEBAR PREVIEW ==========
             })
+            // ======== LISTEN FOR READ RECEIPTS ==========
+            // when the other user reads our messages, log it (future: show ✓✓ checkmarks)
+            .listen(
+                '.MessagesRead',
+                (event: {
+                    conversation_id: number;
+                    read_by_user_id: number;
+                }) => {
+                    console.log(
+                        `Messages in conversation ${event.conversation_id} were read by user ${event.read_by_user_id}`,
+                    );
+                    // future enhancement: update message bubbles to show ✓✓ read receipts
+                },
+            )
+            // ======== END LISTEN FOR READ RECEIPTS ==========
             // ==== LISTEN FOR TYPING WHISPER EVENT =====
             .listenForWhisper('typing', (data: { name: string }) => {
                 // show typing indicator with the sender's name

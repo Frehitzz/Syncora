@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Events\MessageSent;
+use App\Events\MessagesRead;
+use App\Jobs\MarkMessageRead;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
@@ -100,5 +102,31 @@ class MessageController extends Controller
             'time' => $message->created_at->format('g:i A'),
             'isOwn' => true,
         ], 201);
+    }
+
+    /**
+     * ========= markAsRead ============
+     * - marks all unread messages in a conversation as
+     * read for the authenticated user
+     */
+    public function markAsRead(Request $request, Conversation $conversation): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        // make sure logged in user belongs to this conversation
+        if (! $conversation->users()->where('user_id', $user->id)->exists()) {
+            abort(403, 'you do not belong to this conversation');
+        }
+
+        // dispatch the job to mark messages as read in the bg
+        // this pushes the heavy db update to the queue so the user doesnt wait
+        MarkMessageRead::dispatch($conversation->id, $user->id);
+
+        // broadcast to the conversation channel so the sender knows their messages were seen
+        broadcast(new MessagesRead($conversation->id, $user->id))
+            ->toOthers();
+
+        return response()->json(['status' => 'messages marked as read']);
     }
 }

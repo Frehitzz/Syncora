@@ -364,10 +364,10 @@ Use `Queue::fake()` in Pest, send a message to an offline user, and assert `Send
 
 ### Feature 4.2 — Mark Messages as Read
 
-- [ ] When a user opens a conversation, mark all unread messages as read
-- [ ] Update the unread badge count on the sidebar in real-time
-- [ ] Queue a `MarkMessagesRead` job for batch updates
-- [ ] Write a Pest test for the read status update
+- [ x ] When a user opens a conversation, mark all unread messages as read
+- [ x ] Update the unread badge count on the sidebar in real-time
+- [ x ] Queue a `MarkMessagesRead` job for batch updates
+- [ x ] Write a Pest test for the read status update
 
 **What is this?**
 The UI shows a red badge with a number (like "2" or "5") on conversations that have unread messages. When the user opens that conversation, those messages should be marked as read and the badge should disappear.
