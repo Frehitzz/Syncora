@@ -28,6 +28,7 @@ class MessageSent implements ShouldBroadcast
     {
         return [
             new PrivateChannel('conversation.'.$this->message->conversation_id),
+            new PrivateChannel('user.'.$this->message->receiver_id),
         ];
     }
 
@@ -38,8 +39,16 @@ class MessageSent implements ShouldBroadcast
      */
     public function broadcastWith(): array
     {
+        // ======== broadcast data =========
+        // it translate the value from db to a json format so react(frontend)
+        // can understand it
         return [
             'id' => $this->message->id,
+            'conversation_id' => $this->message->conversation_id,
+
+            // go to the message table grab this message row and
+            // look at the sender_id column in this message row
+            // then go to the users table and get the name column
             'sender' => $this->message->sender->name,
             'content' => $this->message->body,
             'time' => $this->message->created_at->format('g:i A'),

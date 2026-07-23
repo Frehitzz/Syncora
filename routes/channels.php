@@ -44,3 +44,14 @@ Broadcast::channel('chat', function ($user) {
         'name' => $user->name,
     ];
 });
+
+/**
+ * === AUTHORIZE THE USER PRIVATE CHANNEL FOR SIDEBAR UPDATES
+ * - each user listens on their own channel (user.5, user.12, etc.)
+ * - when someone sends them a message, a notification arrives here
+ *   so the sidebar can update in real-time without subscribing to every conversation
+ */
+Broadcast::channel('user.{id}', function ($user, $id) {
+    // checks if the logged in users id matches the id of the channel thay are trying to joing
+    return (int) $user->id === (int) $id;
+});

@@ -210,6 +210,15 @@ export default function Home({
         conversations[0] || null,
     );
 
+    // ======== ACTIVE CONVO REF ==========
+    // useRef keeps a "live pointer" to the current activeConvo value.
+    // WebSocket callbacks are created once and would otherwise see a stale (outdated) activeConvo.
+    // By reading activeConvoRef.current inside the callback, we always get the latest value.
+    const activeConvoRef = useRef<Conversation | null>(activeConvo);
+    useEffect(() => {
+        activeConvoRef.current = activeConvo;
+    }, [activeConvo]);
+
     // Sidebar collapse state
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
@@ -644,6 +653,53 @@ export default function Home({
             window.Echo.leave('chat');
         };
     }, []); // Empty array = run once on mount, clean up on unmount
+
+    // ========== USER CHANNEL — REAL-TIME SIDEBAR UPDATES ==========
+    // Subscribe to the logged-in user's personal channel (user.5, user.12, etc.)
+    // When someone sends us a message in ANY conversation, a notification arrives here
+    // so we can update the sidebar preview and unread count in real-time.
+    useEffect(() => {
+        const user = (auth as { user: { id: number } }).user;
+
+        window.Echo.private(`user.${user.id}`).listen(
+            'MessageSent',
+            (data: {
+                id: number;
+                conversation_id: number;
+                sender: string;
+                content: string;
+                time: string;
+            }) => {
+                setLocalConversations((prev) =>
+                    prev.map((c) => {
+                        if (c.id === data.conversation_id) {
+                            // check if the user is currently looking at this conversation
+                            const isCurrentlyActive =
+                                activeConvoRef.current?.id ===
+                                data.conversation_id;
+
+                            return {
+                                ...c,
+                                lastMessage: data.content,
+                                time: data.time,
+                                // only bump unread if the user is NOT looking at this conversation
+                                unread: isCurrentlyActive
+                                    ? c.unread
+                                    : c.unread + 1,
+                            };
+                        }
+
+                        return c;
+                    }),
+                );
+            },
+        );
+
+        // CLEANUP: unsubscribe when the component unmounts
+        return () => {
+            window.Echo.leave(`user.${user.id}`);
+        };
+    }, [auth]); // re-run if auth changes (e.g., user logs out and back in)
 
     // auto display messages for the first conversation when the page loads
     useEffect(() => {
